@@ -1,0 +1,3 @@
+GCC = gcc
+CFLAGS = -c -std=c99 -Wall
+MAKE = mingw32-make
