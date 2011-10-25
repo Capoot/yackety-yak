@@ -204,3 +204,23 @@ YakMessage* createRogerMessage(char* message) {
 
 	return msg;
 }
+
+YakMessage* createSaysMessage(char* name, char* text, int isWhisper) {
+
+	YakMessage* msg = (YakMessage*)malloc(sizeof(YakMessage));
+	int nameLength = strlen(name);
+	int textLength = strlen(text);
+
+	msg->header.type = SAYS;
+	msg->header.version = YAK_VERSION;
+	msg->header.dataSize = (nameLength + textLength) * sizeof(char);
+	msg->header.params.saysParams.nameLength = nameLength;
+	msg->header.params.saysParams.nameStart = 0;
+	msg->header.params.saysParams.textLength = textLength;
+	msg->header.params.saysParams.textStart = nameLength;
+	msg->header.params.saysParams.isWhisper = isWhisper;
+	copyStringToData(0, name, msg);
+	copyStringToData(nameLength, text, msg);
+
+	return msg;
+}

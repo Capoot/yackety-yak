@@ -125,6 +125,22 @@ int readRemoveNameParams(YakMessage* msg, char* name) {
 	return 0;
 }
 
+int readSaysParams(YakMessage* msg, char* name, char* text, int* isWhisper) {
+	if(msg->data == NULL) {
+		return 100;
+	}
+	SaysParams* params = &msg->header.params.saysParams;
+	name = (char*)malloc((params->nameLength + 1) * sizeof(char));
+	text = (char*)malloc((params->textLength + 1) * sizeof(char));
+	isWhisper = (int*)malloc(sizeof(int));
+	*isWhisper = params->isWhisper;
+	strncpy(name, (char*)&msg->data[params->nameStart], params->nameLength);
+	strncpy(text, (char*)&msg->data[params->textStart], params->textLength);
+	zeroTerminate(name, params->nameLength);
+	zeroTerminate(text, params->textLength);
+	return 0;
+}
+
 /**
  * Adds the terminator symbol '\0' to the end of a string. The function will
  * try to insert the terminator symbol at the position [length + 1]. Be sure

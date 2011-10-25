@@ -15,6 +15,7 @@ typedef enum {
 	WELCOME,
 	REJECTED,
 	SAY,
+	SAYS,
 	WHISPER,
 	BYE,
 	GOTO,
@@ -44,6 +45,14 @@ typedef struct {
 } NamesParams;
 
 typedef struct {
+	int nameStart;
+	int nameLength;
+	int textStart;
+	int textLength;
+	int isWhisper;
+} SaysParams;
+
+typedef struct {
 	MessageType type;
 	int version;
 	int dataSize;
@@ -51,6 +60,7 @@ typedef struct {
 		HelloParams helloParams;
 		WhisperParams whisperParams;
 		NamesParams namesParams;
+		SaysParams saysParams;
 	} params;
 } YakHeader;
 
@@ -59,14 +69,13 @@ typedef struct {
 	BYTE* data;
 } YakMessage;
 
-/*** Client Message Factories ***/
+/*** Message Factories ***/
 YakMessage* createHelloMessage(char*, char*);
-YakMessage* createSayMessage(char*); // FIXME wie kommt der text zum client?? ->textmessage
+YakMessage* createSayMessage(char*);
 YakMessage* createWhisperMessage(char*, char*);
+YakMessage* createSaysMessage(char*, char*, int);
 YakMessage* createRogerMessage(char*);
 YakMessage* createByeMessage();
-
-/*** Server Message Factories ***/
 YakMessage* createWelcomeMessage();
 YakMessage* createRejectedMessage(int);
 YakMessage* createGotoMessage(long int);
@@ -78,10 +87,12 @@ YakMessage* createRemoveNameMessage(char*);
 /*** Message Utility Functions ***/
 void deleteMessage(YakMessage*);
 int readSayParams(YakMessage*, char*);
-
-/* Remark: the read(*)Params functions return zero for successful access
- * and non-zero for errors. See the following table for the meaning of the
- * error codes.
- *
- * 100: Message Data is NULL
- */
+int readHelloParams(YakMessage*, char*, char*);
+int readWhisperParams(YakMessage*, char*, char*);
+int readRogerParams(YakMessage*, char*);
+int readRejectedParams(YakMessage*, int*);
+int readGotoParams(YakMessage*, long int*);
+int readNamesParams(YakMessage*, char**, int*);
+int readAddNameParams(YakMessage*, char*);
+int readRemoveNameParams(YakMessage*, char*);
+int readSaysParams(YakMessage*, char*, char*, int*);
