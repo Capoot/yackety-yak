@@ -77,3 +77,11 @@ YakMessage* createRemoveNameMessage(char*);
 
 /*** Message Utility Functions ***/
 void deleteMessage(YakMessage*);
+int readSayParams(YakMessage*, char*);
+
+/* Remark: the read(*)Params functions return zero for successful access
+ * and non-zero for errors. See the following table for the meaning of the
+ * error codes.
+ *
+ * 100: Message Data is NULL
+ */

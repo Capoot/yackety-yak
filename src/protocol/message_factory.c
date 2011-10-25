@@ -151,12 +151,13 @@ YakMessage* createNamesMessage(char** names, int namesCount) {
 
 	msg->header.type = NAMES;
 	msg->header.version = YAK_VERSION;
-	msg->header.dataSize = 0;
-	msg->data = (BYTE*)malloc(size * sizeof(char));
+	msg->header.dataSize = size * (sizeof(char) + sizeof(int));
+	msg->data = (BYTE*)malloc(size * (sizeof(char) + sizeof(int)));
 
 	int index = 0;
 	for(int i=0; i<namesCount; i++) {
 		int len = strlen(names[i]);
+		msg->data[index++] = (BYTE)len;
 		copyStringToData(index, names[i], msg);
 		index += len;
 	}
