@@ -4,12 +4,15 @@
 #endif /* NETWORK_H_ */
 
 typedef struct {
-	union {
-		unsigned char firstByte;
-		unsigned char secondByte;
-		unsigned char thirdByte;
-		unsigned char fourthByte;
-		long int longInt;
-	} ip;
+	unsigned long int address;
 	int port;
 } IpAddress;
+
+typedef enum {
+	NETWORK_OK,
+	HOST_NOT_FOUND,
+	INVALID_ADDRESS,
+	CONNECTTION_TIMEOUT
+} NetworkError;
+
+int initSockets(void);

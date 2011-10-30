@@ -1,6 +1,6 @@
 include ..\makefile.rules
 
-protocol: compile archive clean
+protocol: compile archive
 
 compile:
 	$(GCC) $(CFLAGS) message_factory.c
@@ -8,6 +8,7 @@ compile:
 	
 archive:
 	ar rcs ..\..\lib\libprotocol.a message_factory.o message_utility.o
+	del *.o
 	
 clean:
 	del *.o

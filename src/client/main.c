@@ -4,47 +4,25 @@
 
 #include "client.h"
 
-int handleError(ClientError);
+void handleError(ClientError);
 
 void parseIp(char* ipString, IpAddress* ipAddress) {
 
-	int len = strlen(ipString);
-	int i = 0;
-	char* buffer = (char*)malloc(4 * sizeof(char));
-	int bufferIndex = 0;
-	int byteNr = 0;
+	char* delimiter = ".";
+	char* substr;
+	int byte = 3;
 
-	do {
-		if(ipString[i] == '.') {
-			long int value = strtol(buffer, NULL, 10);
-			switch(byteNr) {
-			case 0: {
-				ipAddress->ip.firstByte = (unsigned char)value;
-				break;
-			}
-			case 1: {
-				ipAddress->ip.secondByte = (unsigned char)value;
-				break;
-			}
-			case 2: {
-				ipAddress->ip.thirdByte = (unsigned char)value;
-				break;
-			}
-			case 3: {
-				ipAddress->ip.fourthByte = (unsigned char)value;
-			}
-			}
-			bufferIndex = 0;
-			byteNr++;
-		} else {
-			buffer[bufferIndex++] = ipString[i];
-		}
-		i++;
-	} while(i < len);
+	substr = strtok(ipString, delimiter);
+	while(substr != NULL) {
+		unsigned long int value = strtol(substr, NULL, 10);
+		unsigned long int shifted = value << (byte-- * 8);
+		ipAddress->address |= shifted;
+		substr = strtok(NULL, delimiter);
+	}
 }
 
 ClientError readArgs(int argc, char* argv[], ClientSettings* settings) {
-	for(int i=0; i<argc; i++) {
+	for(int i=1; i<argc-1; i++) {
 		if(strcmp(argv[i], "-n") == 0) {
 			if(argv[i+1] == NULL) {
 				return NAME_NOT_SPECIFIED;
@@ -68,32 +46,52 @@ ClientError readArgs(int argc, char* argv[], ClientSettings* settings) {
 			continue;
 		}
 	}
-	return OK;
+	if(strcmp(settings->name, "") == 0) {
+		return NAME_NOT_SPECIFIED;
+	}
+	if(settings->remoteAddress.address == 0) {
+		return REMOTE_ADDRESS_NOT_SPECIFIED;
+	}
+	if(settings->remoteAddress.port == 0) {
+		return PORT_NOT_SPECIFIED;
+	}
+	return CLIENT_OK;
+}
+
+void init(ClientSettings* settings) {
+	int code;
+	settings->name = "";
+	settings->remoteAddress.address = 0;
+	settings->remoteAddress.port = 0;
+	printf("Initializing sockets... ");
+	code = initSockets();
+	if(code == 0) {
+		printf("success!\n");
+	} else {
+		printf("error! (code %d)", code);
+	}
 }
 
 int main(int argc, char* argv[]) {
 
 	ClientSettings settings;
+	init(&settings);
 
 	ClientError error = readArgs(argc, argv, &settings);
-	if(error != OK) {
-		return handleError(error);
+	if(error != CLIENT_OK) {
+		handleError(error);
 	}
 
-	printf("the name is: %s\n", settings.name);
-	printf("the ip is: %d.%d.%d.%d (%d)\n",
-			settings.remoteAddress.ip.firstByte,
-			settings.remoteAddress.ip.secondByte,
-			settings.remoteAddress.ip.thirdByte,
-			settings.remoteAddress.ip.fourthByte,
-			settings.remoteAddress.ip.longInt);
-	printf("the port is %d", settings.remoteAddress.port);
+	error = runClient(&settings);
+	if(error != CLIENT_OK) {
+		handleError(error);
+	}
 
-	return 0;
+	exit(0);
 }
 
-int handleError(ClientError error) {
-	printf("An error has occured: ");
+void handleError(ClientError error) {
+	printf("Fatal error: ");
 	switch(error) {
 	case NAME_NOT_SPECIFIED: {
 		printf("missing argument <user name>");
@@ -107,10 +105,14 @@ int handleError(ClientError error) {
 		printf("missing argument <remote port>");
 		break;
 	}
+	case CONNECTION_ERROR: {
+		printf("connection lost");
+		break;
+	}
 	default: {
 		printf("unknown error");
 	}
 	}
 	printf("\n");
-	return (int)error;
+	exit((int)error);
 }
