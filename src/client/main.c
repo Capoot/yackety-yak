@@ -4,22 +4,7 @@
 
 #include "client.h"
 
-void handleError(ClientError);
-
-void parseIp(char* ipString, IpAddress* ipAddress) {
-
-	char* delimiter = ".";
-	char* substr;
-	int byte = 3;
-
-	substr = strtok(ipString, delimiter);
-	while(substr != NULL) {
-		unsigned long int value = strtol(substr, NULL, 10);
-		unsigned long int shifted = value << (byte-- * 8);
-		ipAddress->address |= shifted;
-		substr = strtok(NULL, delimiter);
-	}
-}
+void handleApplicationError(ClientError);
 
 ClientError readArgs(int argc, char* argv[], ClientSettings* settings) {
 	for(int i=1; i<argc-1; i++) {
@@ -27,14 +12,14 @@ ClientError readArgs(int argc, char* argv[], ClientSettings* settings) {
 			if(argv[i+1] == NULL) {
 				return NAME_NOT_SPECIFIED;
 			}
-			settings->name = argv[i+1];
+			settings->userName = argv[i+1];
 			continue;
 		}
 		if(strcmp(argv[i], "-a") == 0) {
 			if(argv[i+1] == NULL) {
 				return REMOTE_ADDRESS_NOT_SPECIFIED;
 			}
-			parseIp(argv[i+1], &settings->remoteAddress);
+			settings->serverIp = argv[i+1];
 			continue;
 		}
 		if(strcmp(argv[i], "-p") == 0) {
@@ -42,34 +27,26 @@ ClientError readArgs(int argc, char* argv[], ClientSettings* settings) {
 				return PORT_NOT_SPECIFIED;
 			}
 			long int port = strtol(argv[i+1], NULL, 10);
-			settings->remoteAddress.port = (int)port;
+			settings->serverPort = (int)port;
 			continue;
 		}
 	}
-	if(strcmp(settings->name, "") == 0) {
+	if(strcmp(settings->userName, "") == 0) {
 		return NAME_NOT_SPECIFIED;
 	}
-	if(settings->remoteAddress.address == 0) {
+	if(strcmp(settings->serverIp,"") == 0) {
 		return REMOTE_ADDRESS_NOT_SPECIFIED;
 	}
-	if(settings->remoteAddress.port == 0) {
+	if(settings->serverPort == 0) {
 		return PORT_NOT_SPECIFIED;
 	}
 	return CLIENT_OK;
 }
 
 void init(ClientSettings* settings) {
-	int code;
-	settings->name = "";
-	settings->remoteAddress.address = 0;
-	settings->remoteAddress.port = 0;
-	printf("Initializing sockets... ");
-	code = initSockets();
-	if(code == 0) {
-		printf("success!\n");
-	} else {
-		printf("error! (code %d)", code);
-	}
+	settings->userName = "";
+	settings->serverIp = "";
+	settings->serverPort = 0;
 }
 
 int main(int argc, char* argv[]) {
@@ -79,18 +56,18 @@ int main(int argc, char* argv[]) {
 
 	ClientError error = readArgs(argc, argv, &settings);
 	if(error != CLIENT_OK) {
-		handleError(error);
+		handleApplicationError(error);
 	}
 
 	error = runClient(&settings);
 	if(error != CLIENT_OK) {
-		handleError(error);
+		handleApplicationError(error);
 	}
 
 	exit(0);
 }
 
-void handleError(ClientError error) {
+void handleApplicationError(ClientError error) {
 	printf("Fatal error: ");
 	switch(error) {
 	case NAME_NOT_SPECIFIED: {
@@ -109,10 +86,26 @@ void handleError(ClientError error) {
 		printf("connection lost");
 		break;
 	}
+	case CREATE_SOCKET_ERROR: {
+		printf("could not create socket");
+		break;
+	}
+	case CONNECT_SOCKET_ERROR: {
+		printf("could not establish connection to remote host");
+		break;
+	}
+	case INIT_SOCKET_ERROR: {
+		printf("could not initialize socket");
+		break;
+	}
+	case NETWORK_ERROR: {
+		printf("");
+	}
 	default: {
 		printf("unknown error");
 	}
 	}
 	printf("\n");
+	printf("Process terminated...");
 	exit((int)error);
 }
