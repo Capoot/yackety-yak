@@ -1,4 +1,5 @@
 #include <windows.h>
+
 #include "../protocol/protocol.h"
 #include "../client/client.h"
 #include "../server/server.h"
@@ -92,6 +93,10 @@ ServerError startServer(unsigned short port, int maxConnections) {
 	ACCEPT_SOCKET = (SOCKET*)malloc(sizeof(SOCKET));
 	SOCKADDR_IN addr;
 
+	if(initSockets() != 0) {
+		return SERVER_INIT_SOCKET_ERROR;
+	}
+
 	int error = createSocket(ACCEPT_SOCKET);
 	if(error != 0) {
 		return SOCKET_CREATE_ERROR;
@@ -115,9 +120,9 @@ ServerError startServer(unsigned short port, int maxConnections) {
 	return SERVER_OK;
 }
 
-ServerError waitForConnection(SOCKET* s) {
-	*s = accept(*ACCEPT_SOCKET, NULL, NULL);
-	if(*s == INVALID_SOCKET) {
+ServerError waitForConnection(void) {
+	SOCKET s = accept(*ACCEPT_SOCKET, NULL, NULL);
+	if(s == INVALID_SOCKET) {
 		return SOCKET_ACCEPT_ERROR;
 	}
 	return SERVER_OK;
@@ -129,4 +134,8 @@ void shutDownServer(void) {
 		free(ACCEPT_SOCKET);
 	}
 	WSACleanup();
+}
+
+int getErrorCode(void) {
+	return WSAGetLastError();
 }

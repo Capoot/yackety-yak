@@ -80,5 +80,11 @@ int main(int argc, char* argv[]) {
 		exit((int)error);
 	}
 
+	error = runServer(settings);
+	if(error != SERVER_OK) {
+		handleError(error);
+		exit((int)error);
+	}
+
 	return 0;
 }

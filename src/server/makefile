@@ -6,9 +6,10 @@ server: compile archive
 
 compile:
 	$(GCC) $(CFLAGS) main.c
+	$(GCC) $(CFLAGS) comline.c
 	
 archive:
-	ar rcs $(LIBSRV) main.o
+	ar rcs $(LIBSRV) main.o comline.o
 	del *.o
 
 clean:
