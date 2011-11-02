@@ -3,7 +3,7 @@
 #define NETWORK_H_
 #endif /* NETWORK_H_ */
 
-int initSockets(void);
-void cleanupSockets(void);
-int connectToServer(const char*, unsigned short);
-int disconnectFromServer(void);
+int startClient(const char*, unsigned short);
+int startServer(unsigned short, int);
+void shutDownClient(void);
+void shutDownServer(void);

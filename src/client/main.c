@@ -99,13 +99,11 @@ void handleApplicationError(ClientError error) {
 		break;
 	}
 	case NETWORK_ERROR: {
-		printf("");
+		printf(""); // FIXME report correctly
 	}
 	default: {
 		printf("unknown error");
 	}
 	}
-	printf("\n");
-	printf("Process terminated...");
 	exit((int)error);
 }

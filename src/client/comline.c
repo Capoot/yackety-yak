@@ -7,27 +7,18 @@
 ClientError runClient(ClientSettings* settings) {
 
 	ClientError error;
-	printf("Initializing sockets... ");
-	error = initSockets();
-	if(error != CLIENT_OK) {
-		return NETWORK_ERROR;
-	}
-	printf("success!\n");
 
 	printf("connecting to host %s:%u...", settings->serverIp, settings->serverPort);
-	error = connectToServer(settings->serverIp, settings->serverPort);
+	error = startClient(settings->serverIp, settings->serverPort);
 	if(error != CLIENT_OK) {
 		printf("failed!\n");
-		return error;
+	} else {
+		printf("success!\n");
 	}
-	printf("success!\n");
 
-	printf("disconnecting...\n");
-	disconnectFromServer();
-
-	printf("Releasing sockets... ");
-	cleanupSockets();
+	printf("Shutting down... ");
+	shutDownClient();
 	printf("done!\n");
 
-	return CLIENT_OK;
+	return error;;
 }
