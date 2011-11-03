@@ -18,8 +18,9 @@ ClientError runClient(ClientSettings* settings) {
 	}
 
 	printf("Shutting down... ");
-	shutDownClient();
+	shutDownClient(&server);
+	free(server.address);
 	printf("done!\n");
 
-	return error;;
+	return error;
 }

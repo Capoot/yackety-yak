@@ -1,4 +1,5 @@
 #include <windows.h>
+#include <string.h>
 
 #include "connection.h"
 #include "../protocol/protocol.h"
@@ -6,15 +7,6 @@
 #include "../server/server.h"
 
 #define SOCKET_IMPL "wsock32"
-
-/******** CLIENT GLOBALS **********/
-
-SOCKET* CLIENT_SOCKET = NULL;
-SOCKADDR_IN* CLIENT_TARGET_ADDRESS = NULL;
-
-/******** SERVER GLOBALS **********/
-
-SOCKET* ACCEPT_SOCKET = NULL;
 
 /******** PRIVATE *********/
 
@@ -27,7 +19,7 @@ int createSocket(SOCKET* s) {
 }
 
 SOCKADDR_IN* createIpAddress(const char* ip, unsigned short port) {
-	SOCKADDR_IN* addr = (SOCKADDR_IN*)malloc(sizeof(SOCKADDR_IN));
+	SOCKADDR_IN* addr = malloc(sizeof(SOCKADDR_IN));
 	memset(addr, 0, sizeof(SOCKADDR_IN));
 	addr->sin_family = AF_INET;
 	addr->sin_port = htons(port);
@@ -88,43 +80,43 @@ ClientError startClient(const char* ip, unsigned short port, Connection* server)
 		return INIT_SOCKET_ERROR;
 	}
 
-	CLIENT_TARGET_ADDRESS = createIpAddress(ip, port); // TODO addresse aufräumen (global?)
-	CLIENT_SOCKET = (SOCKET*)malloc(sizeof(SOCKET));
+	SOCKADDR_IN* address = createIpAddress(ip, port);
+	SOCKET s;
 
-	code = createSocket(CLIENT_SOCKET);
+	code = createSocket(&s);
 	if(code != 0) {
 		return CREATE_SOCKET_ERROR;
 	}
 
-	code = connect(*CLIENT_SOCKET, (SOCKADDR*)CLIENT_TARGET_ADDRESS, sizeof(SOCKADDR));
+	code = connect(s, (SOCKADDR*)address, sizeof(SOCKADDR));
 	if(code == SOCKET_ERROR) {
 		return CONNECT_SOCKET_ERROR;
 	}
 
+	server->socketId = s;
+	server->type = SERVER;
+	server->address = malloc(strlen(ip));
+	strcpy(server->address, ip);
+	server->port = port;
+
 	return CLIENT_OK;
 }
 
-void shutDownClient(void) {
-	if(CLIENT_SOCKET != NULL) {
-		closesocket(*CLIENT_SOCKET);
-		free(CLIENT_SOCKET);
-	}
-	if(CLIENT_TARGET_ADDRESS != NULL) {
-		free(CLIENT_TARGET_ADDRESS);
-	}
+void shutDownClient(Connection* con) {
+	closesocket(con->socketId);
 	WSACleanup();
 }
 
-ServerError startServer(unsigned short port, int maxConnections) {
+ServerError startServer(unsigned short port, int maxConnections, Connection* acceptSocket) {
 
-	ACCEPT_SOCKET = (SOCKET*)malloc(sizeof(SOCKET));
 	SOCKADDR_IN addr;
+	SOCKET s;
 
 	if(initSockets() != 0) {
 		return SERVER_INIT_SOCKET_ERROR;
 	}
 
-	int error = createSocket(ACCEPT_SOCKET);
+	int error = createSocket(&s);
 	if(error != 0) {
 		return SOCKET_CREATE_ERROR;
 	}
@@ -134,32 +126,32 @@ ServerError startServer(unsigned short port, int maxConnections) {
 	addr.sin_port = htons(port);
 	addr.sin_addr.s_addr = ADDR_ANY;
 
-	error = bind(*ACCEPT_SOCKET, (SOCKADDR*)&addr, sizeof(SOCKADDR_IN));
+	error = bind(s, (SOCKADDR*)&addr, sizeof(SOCKADDR_IN));
 	if(error == SOCKET_ERROR) {
 		return SOCKET_BIND_ERROR;
 	}
 
-	error = listen(*ACCEPT_SOCKET, maxConnections);
+	error = listen(s, maxConnections);
 	if(error == SOCKET_ERROR) {
 		return SOCKET_LISTEN_ERROR;
 	}
 
+	acceptSocket->socketId = s;
+	acceptSocket->port = port;
+
 	return SERVER_OK;
 }
 
-ServerError waitForConnection(Connection* connection) {
-	connection->socketId = accept(*ACCEPT_SOCKET, NULL, NULL);
-	if(connection->socketId == INVALID_SOCKET) {
+ServerError waitForConnection(Connection* client, Connection* acceptSocket) {
+	client->socketId = accept(acceptSocket->socketId, NULL, NULL);
+	if(client->socketId == INVALID_SOCKET) {
 		return SOCKET_ACCEPT_ERROR;
 	}
 	return SERVER_OK;
 }
 
-void shutDownServer(void) {
-	if(ACCEPT_SOCKET != NULL) {
-		closesocket(*ACCEPT_SOCKET);
-		free(ACCEPT_SOCKET);
-	}
+void shutDownServer(Connection* acceptSocket) {
+	closesocket(acceptSocket->socketId);
 	WSACleanup();
 }
 

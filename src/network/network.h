@@ -5,10 +5,10 @@
 #include "connection.h"
 
 int startClient(const char*, unsigned short, Connection*);
-int startServer(unsigned short, int);
-void shutDownClient(void);
-void shutDownServer(void);
-int waitForConnection(Connection*);
+int startServer(unsigned short, int, Connection*);
+void shutDownClient(Connection*);
+void shutDownServer(Connection*);
+int waitForConnection(Connection*, Connection*);
 int getErrorCode(void);
 int sendMessage(YakMessage*, Connection*);
 int receiveMessage(Connection*);

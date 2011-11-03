@@ -3,13 +3,16 @@
 
 typedef enum {
 	CLIENT,
-	SERVER
+	SERVER,
+	ACCEPT
 } ConnectionType;
 
 typedef struct {
 	unsigned int socketId;
 	char* userName;
 	ConnectionType type;
+	char* address;
+	unsigned short port;
 } Connection;
 
 #endif

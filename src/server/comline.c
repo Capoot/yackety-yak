@@ -5,8 +5,10 @@
 
 ServerError runServer(ServerSettings* settings) {
 
+	Connection acceptSocket;
+
 	printf("Launching server at port %d... ", settings->listenPort);
-	ServerError error = startServer(settings->listenPort, settings->maxConnections);
+	ServerError error = startServer(settings->listenPort, settings->maxConnections, &acceptSocket);
 	if(error != SERVER_OK) {
 		printf("failed! (code %d)\n", getErrorCode());
 		return error;
@@ -15,8 +17,8 @@ ServerError runServer(ServerSettings* settings) {
 	}
 
 	printf("Awaiting incoming connection...\n");
-	Connection* client = malloc(sizeof(Connection));
-	error = waitForConnection(client);
+	Connection client;
+	error = waitForConnection(&client, &acceptSocket);
 	if(error != SERVER_OK) {
 		return error;
 	} else {
@@ -25,14 +27,14 @@ ServerError runServer(ServerSettings* settings) {
 
 	printf("Sending IDENTIFY... ");
 	YakMessage* msg = createIdentifyMessage(0);
-	if(sendMessage(msg, client) != 0) {
+	if(sendMessage(msg, &client) != 0) {
 		printf("failed!\n");
 		return -1;
 	}
 	printf("success!\n");
 
 	printf("Shutting down... ");
-	shutDownServer();
+	shutDownServer(&acceptSocket);
 	printf("done!\n");
 
 	return error;
