@@ -49,8 +49,13 @@ char* serializeMessage(YakMessage* msg, int size) {
 	return bytes;
 }
 
-YakMessage* deSerializeMessage(char* bytes, int size) {
-	return NULL;
+YakHeader* deSerializeHeader(char* bytes, int size) {
+	YakHeader* header = malloc(sizeof(YakHeader));
+	char* pointer = (char*)header;
+	for(int i=0; i<size; i++) {
+		pointer[i] = bytes[i];
+	}
+	return header;
 }
 
 /******** PUBLIC *********/
@@ -67,9 +72,40 @@ int sendMessage(YakMessage* msg, Connection* con) {
 	return 0;
 }
 
-YakMessage* receiveMessage(Connection* con) {
+int receiveMessage(YakMessage* msg, Connection* con) {
 
-	return NULL;
+
+	int size = sizeof(YakHeader);
+	char* buffer = malloc(size);
+
+	int result = recv(con->socketId, buffer, size, 0);
+	if(result == 0) {
+		return CONN_LOST;
+	} else if(result == SOCKET_ERROR) {
+		return CONN_ERROR;
+	}
+
+	YakHeader* header = deSerializeHeader(buffer, size);
+	msg->header = *header;
+	free(buffer);
+	free(header);
+
+	size = header->dataSize;
+	if(size > 0) {
+		buffer = malloc(size);
+		result = recv(con->socketId, buffer, size, 0);
+		if(result == 0) {
+			return CONN_LOST;
+		} else if(result == SOCKET_ERROR) {
+			return CONN_ERROR;
+		}
+		msg->data = malloc(size * sizeof(unsigned char));
+		for(int i=0; i<size; i++) {
+			msg->data[i] = buffer[i];
+		}
+	}
+
+	return 0;
 }
 
 ClientError startClient(const char* ip, unsigned short port, Connection* server) {

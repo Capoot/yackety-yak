@@ -11,6 +11,6 @@ void shutDownServer(Connection*);
 int waitForConnection(Connection*, Connection*);
 int getErrorCode(void);
 int sendMessage(YakMessage*, Connection*);
-int receiveMessage(Connection*);
+int receiveMessage(YakMessage*, Connection*);
 
 #endif /* NETWORK_H_ */

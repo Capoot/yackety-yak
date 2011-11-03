@@ -231,9 +231,9 @@ YakMessage* createSaysMessage(char* name, char* text, int isWhisper) {
 YakMessage* createIdentifyMessage(unsigned char pwRequired) {
 	YakMessage* msg = malloc(sizeof(YakMessage));
 	msg->header.type = IDENTIFY;
-	msg->data = malloc(sizeof(unsigned char));
-	msg->data[0] = pwRequired;
 	msg->header.dataSize = sizeof(unsigned char);
+	msg->data = malloc(msg->header.dataSize);
+	msg->data[0] = pwRequired;
 	msg->header.version = YAK_VERSION;
 	return msg;
 }

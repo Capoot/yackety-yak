@@ -29,9 +29,25 @@ ServerError runServer(ServerSettings* settings) {
 	YakMessage* msg = createIdentifyMessage(0);
 	if(sendMessage(msg, &client) != 0) {
 		printf("failed!\n");
+		// TODO eval code, print error, return propper error
 		return -1;
 	}
 	printf("success!\n");
+
+	// TODO loop this
+	YakMessage helloMessage;
+	int result = receiveMessage(&helloMessage, &client);
+	if(result != 0) {
+		printf("*** error %d occured, expected hello message ***\n", getErrorCode());
+	}
+	printf("received a response: ");
+	if(helloMessage.header.type == HELLO) {
+		char* name = NULL;
+		char* pw = NULL;
+		readHelloParams(&helloMessage, &name, &pw);
+		printf("HELLO (%s/%s)\n", name, pw);
+	}
+	// TODO respond to hello (welcome/rejected)
 
 	printf("Shutting down... ");
 	shutDownServer(&acceptSocket);

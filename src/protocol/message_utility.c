@@ -30,17 +30,19 @@ int readSayParams(YakMessage* msg, char* text) {
 	return 0;
 }
 
-int readHelloParams(YakMessage* msg, char* name, char* password) {
-	if(msg->data == NULL) {
-		return 100;
+void bytewiseStringCopy(const char* src, char* dest, int size) {
+	for(int i=0; i<size; i++) {
+		dest[i] = src[i];
 	}
+	dest[size] = '\0';
+}
+
+int readHelloParams(YakMessage* msg, char** name, char** password) {
 	HelloParams* params = &msg->header.params.helloParams;
-	name = (char*)malloc(params->nameLength * sizeof(char) + 1);
-	password = (char*)malloc(params->passwordLength * sizeof(char) + 1);
-	strncpy(name, (char*)&msg->data[params->nameStart], params->nameLength);
-	strncpy(password, (char*)&msg->data[params->passwordStart], params->passwordLength);
-	zeroTerminate(name, params->nameLength);
-	zeroTerminate(password, params->passwordLength);
+	*name = (char*)malloc(params->nameLength * sizeof(char) + 1);
+	*password = (char*)malloc(params->passwordLength * sizeof(char) + 1);
+	bytewiseStringCopy((char*)&msg->data[params->nameStart], *name, params->nameLength);
+	bytewiseStringCopy((char*)&msg->data[params->passwordStart], *password, params->passwordLength);
 	return 0;
 }
 

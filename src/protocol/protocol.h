@@ -65,7 +65,7 @@ typedef struct {
 } YakMessage;
 
 /*** Message Factories ***/
-YakMessage* createHelloMessage(char*, char*);
+YakMessage* createHelloMessage(char*,char*);
 YakMessage* createSayMessage(char*);
 YakMessage* createWhisperMessage(char*, char*);
 YakMessage* createSaysMessage(char*, char*, int);
@@ -83,7 +83,7 @@ YakMessage* createIdentifyMessage(unsigned char);
 /*** Message Utility Functions ***/
 void deleteMessage(YakMessage*);
 int readSayParams(YakMessage*, char*);
-int readHelloParams(YakMessage*, char*, char*);
+int readHelloParams(YakMessage*, char**, char**);
 int readWhisperParams(YakMessage*, char*, char*);
 int readRogerParams(YakMessage*, char*);
 int readRejectedParams(YakMessage*, int*);

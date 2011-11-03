@@ -83,7 +83,7 @@ void handleApplicationError(ClientError error) {
 		break;
 	}
 	case CONNECTION_ERROR: {
-		printf("connection lost");
+		printf("socket error");
 		break;
 	}
 	case CREATE_SOCKET_ERROR: {
