@@ -1,6 +1,5 @@
 #ifndef SERVER_H_
 #define SERVER_H_
-#endif
 
 typedef enum {
 	SERVER_OK = 0,
@@ -19,3 +18,5 @@ typedef struct {
 } ServerSettings;
 
 ServerError runServer(ServerSettings*);
+
+#endif

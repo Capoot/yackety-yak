@@ -14,8 +14,8 @@ compile:
 	$(MAKE) -C server
 	
 link:
-	$(GCC) -o $(CLIENT_EXE) ..\lib\libprotocol.a ..\lib\libclient.a ..\lib\libnet.a $(LIBWS232)
-	$(GCC) -o $(SERVER_EXE) ..\lib\libprotocol.a ..\lib\libserver.a ..\lib\libnet.a $(LIBWS232)
+	$(GCC) -o $(CLIENT_EXE) ..\lib\libclient.a ..\lib\libprotocol.a ..\lib\libnet.a $(LIBWS232)
+	$(GCC) -o $(SERVER_EXE) ..\lib\libserver.a ..\lib\libprotocol.a ..\lib\libnet.a $(LIBWS232)
 	
 clean:
 	$(MAKE) -C protocol clean

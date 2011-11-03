@@ -1,5 +1,6 @@
 #include <windows.h>
 
+#include "connection.h"
 #include "../protocol/protocol.h"
 #include "../client/client.h"
 #include "../server/server.h"
@@ -43,17 +44,43 @@ int initSockets(void) {
 	return 0;
 }
 
-/******** PUBLIC *********/
-
-int sendMessage(YakMessage* msg) {
-	return 0;
+char* serializeMessage(YakMessage* msg, int size) {
+	char* bytes = malloc(size);
+	char* pointer = (char*)msg;
+	int yakSize = sizeof(YakHeader);
+	for(int i=0; i<yakSize; i++) {
+		bytes[i] = pointer[i];
+	}
+	for(int i=0; i<msg->header.dataSize; i++) {
+		bytes[yakSize+i] = (char)msg->data[i];
+	}
+	return bytes;
 }
 
-YakMessage* receiveMessage(void) {
+YakMessage* deSerializeMessage(char* bytes, int size) {
 	return NULL;
 }
 
-ClientError startClient(const char* ip, unsigned short port) {
+/******** PUBLIC *********/
+
+int sendMessage(YakMessage* msg, Connection* con) {
+	int size = sizeof(YakHeader) + msg->header.dataSize * sizeof(unsigned char);
+	char* bytes = serializeMessage(msg, size);
+	int sent = send(con->socketId, bytes, size, 0);
+	if(sent == SOCKET_ERROR) {
+		free(bytes);
+		return -1;
+	}
+	free(bytes);
+	return 0;
+}
+
+YakMessage* receiveMessage(Connection* con) {
+
+	return NULL;
+}
+
+ClientError startClient(const char* ip, unsigned short port, Connection* server) {
 
 	int code;
 	code = initSockets();
@@ -120,9 +147,9 @@ ServerError startServer(unsigned short port, int maxConnections) {
 	return SERVER_OK;
 }
 
-ServerError waitForConnection(void) {
-	SOCKET s = accept(*ACCEPT_SOCKET, NULL, NULL);
-	if(s == INVALID_SOCKET) {
+ServerError waitForConnection(Connection* connection) {
+	connection->socketId = accept(*ACCEPT_SOCKET, NULL, NULL);
+	if(connection->socketId == INVALID_SOCKET) {
 		return SOCKET_ACCEPT_ERROR;
 	}
 	return SERVER_OK;

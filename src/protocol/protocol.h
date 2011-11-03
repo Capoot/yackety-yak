@@ -1,14 +1,8 @@
-/*
- * Defines the Yakkety-Yak protocol
- */
-
 #ifndef PROTOCOL_H_
 #define PROTOCOL_H_
-#endif
 
 #define BYTE unsigned char
-
-const int YAK_VERSION = 1;
+#define YAK_VERSION 1
 
 typedef enum {
 	HELLO,
@@ -23,7 +17,8 @@ typedef enum {
 	NAMES,
 	ADD_NAME,
 	REMOVE_NAME,
-	ROGER
+	ROGER,
+	IDENTIFY
 } MessageType;
 
 typedef struct {
@@ -56,7 +51,7 @@ typedef struct {
 	MessageType type;
 	int version;
 	int dataSize;
-	union {
+	union Params {
 		HelloParams helloParams;
 		WhisperParams whisperParams;
 		NamesParams namesParams;
@@ -75,14 +70,15 @@ YakMessage* createSayMessage(char*);
 YakMessage* createWhisperMessage(char*, char*);
 YakMessage* createSaysMessage(char*, char*, int);
 YakMessage* createRogerMessage(char*);
-YakMessage* createByeMessage();
-YakMessage* createWelcomeMessage();
+YakMessage* createByeMessage(void);
+YakMessage* createWelcomeMessage(void);
 YakMessage* createRejectedMessage(int);
 YakMessage* createGotoMessage(long int);
-YakMessage* createGiveNamesMessage();
+YakMessage* createGiveNamesMessage(void);
 YakMessage* createNamesMessage(char**, int);
 YakMessage* createAddNameMessage(char*);
 YakMessage* createRemoveNameMessage(char*);
+YakMessage* createIdentifyMessage(unsigned char);
 
 /*** Message Utility Functions ***/
 void deleteMessage(YakMessage*);
@@ -96,3 +92,5 @@ int readNamesParams(YakMessage*, char**, int*);
 int readAddNameParams(YakMessage*, char*);
 int readRemoveNameParams(YakMessage*, char*);
 int readSaysParams(YakMessage*, char*, char*, int*);
+
+#endif

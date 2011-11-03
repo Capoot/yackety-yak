@@ -42,7 +42,7 @@ YakMessage* createHelloMessage(char* name, char* password) {
 	msg->header.type = HELLO;
 	msg->header.version = YAK_VERSION;
 	msg->header.dataSize = (nameLength + passwordLength) * sizeof(char);
-	msg->data = (BYTE*)malloc(msg->header.dataSize * sizeof(BYTE));
+	msg->data = malloc(msg->header.dataSize * sizeof(BYTE));
 
 	copyStringToData(0, name, msg);
 	copyStringToData(nameLength, password, msg);
@@ -50,7 +50,7 @@ YakMessage* createHelloMessage(char* name, char* password) {
 	return msg;
 }
 
-YakMessage* createWelcomeMessage() {
+YakMessage* createWelcomeMessage(void) {
 
 	YakMessage* msg = (YakMessage*)malloc(sizeof(YakMessage));
 
@@ -69,7 +69,7 @@ YakMessage* createRejectedMessage(int reason) {
 	msg->header.type = REJECTED;
 	msg->header.version = YAK_VERSION;
 	msg->header.dataSize = sizeof(int);
-	msg->data = (BYTE*)malloc(sizeof(int));
+	msg->data = malloc(sizeof(int));
 	msg->data[0] = reason;
 
 	return msg;
@@ -83,6 +83,7 @@ YakMessage* createSayMessage(char* message) {
 	msg->header.type = SAY;
 	msg->header.version = YAK_VERSION;
 	msg->header.dataSize = length * sizeof(char);
+	msg->data = malloc(msg->header.dataSize);
 	copyStringToData(0, message, msg);
 
 	return msg;
@@ -101,13 +102,14 @@ YakMessage* createWhisperMessage(char* to, char* message) {
 	msg->header.type = WHISPER;
 	msg->header.version = YAK_VERSION;
 	msg->header.dataSize = (messageLength + toLength) * sizeof(char);
+	msg->data = malloc(msg->header.dataSize);
 	copyStringToData(0, to, msg);
 	copyStringToData(toLength, message, msg);
 
 	return msg;
 }
 
-YakMessage* createByeMessage() {
+YakMessage* createByeMessage(void) {
 
 	YakMessage* msg = (YakMessage*)malloc(sizeof(YakMessage));
 
@@ -126,13 +128,13 @@ YakMessage* createGotoMessage(long int target) {
 	msg->header.type = GOTO;
 	msg->header.version = YAK_VERSION;
 	msg->header.dataSize = sizeof(long int);
-	msg->data = (BYTE*)malloc(sizeof(long int));
+	msg->data = malloc(msg->header.dataSize);
 	msg->data[0] = target;
 
 	return msg;
 }
 
-YakMessage* createGiveNamesMessage() {
+YakMessage* createGiveNamesMessage(void) {
 
 	YakMessage* msg = (YakMessage*)malloc(sizeof(YakMessage));
 
@@ -152,7 +154,7 @@ YakMessage* createNamesMessage(char** names, int namesCount) {
 	msg->header.type = NAMES;
 	msg->header.version = YAK_VERSION;
 	msg->header.dataSize = size * (sizeof(char) + sizeof(int));
-	msg->data = (BYTE*)malloc(size * (sizeof(char) + sizeof(int)));
+	msg->data = malloc(msg->header.dataSize);
 
 	int index = 0;
 	for(int i=0; i<namesCount; i++) {
@@ -167,13 +169,13 @@ YakMessage* createNamesMessage(char** names, int namesCount) {
 
 YakMessage* createAddNameMessage(char* name) {
 
-	YakMessage* msg = (YakMessage*)malloc(sizeof(YakMessage));
+	YakMessage* msg = malloc(sizeof(YakMessage));
 	int len = strlen(name);
 
 	msg->header.type = ADD_NAME;
 	msg->header.version = YAK_VERSION;
 	msg->header.dataSize = len * sizeof(char);
-	msg->data = (BYTE*)malloc(len * sizeof(char));
+	msg->data = malloc(msg->header.dataSize);
 	copyStringToData(0, name, msg);
 
 	return msg;
@@ -181,13 +183,13 @@ YakMessage* createAddNameMessage(char* name) {
 
 YakMessage* createRemoveNameMessage(char* name) {
 
-	YakMessage* msg = (YakMessage*)malloc(sizeof(YakMessage));
+	YakMessage* msg = malloc(sizeof(YakMessage));
 	int len = strlen(name);
 
 	msg->header.type = REMOVE_NAME;
 	msg->header.version = YAK_VERSION;
 	msg->header.dataSize = len * sizeof(char);
-	msg->data = (BYTE*)malloc(len * sizeof(char));
+	msg->data = malloc(msg->header.dataSize);
 	copyStringToData(0, name, msg);
 
 	return msg;
@@ -195,7 +197,7 @@ YakMessage* createRemoveNameMessage(char* name) {
 
 YakMessage* createRogerMessage(char* message) {
 
-	YakMessage* msg = (YakMessage*)malloc(sizeof(YakMessage));
+	YakMessage* msg = malloc(sizeof(YakMessage));
 
 	msg->header.type = ROGER;
 	msg->header.version = YAK_VERSION;
@@ -207,20 +209,31 @@ YakMessage* createRogerMessage(char* message) {
 
 YakMessage* createSaysMessage(char* name, char* text, int isWhisper) {
 
-	YakMessage* msg = (YakMessage*)malloc(sizeof(YakMessage));
+	YakMessage* msg = malloc(sizeof(YakMessage));
 	int nameLength = strlen(name);
 	int textLength = strlen(text);
 
 	msg->header.type = SAYS;
 	msg->header.version = YAK_VERSION;
-	msg->header.dataSize = (nameLength + textLength) * sizeof(char);
 	msg->header.params.saysParams.nameLength = nameLength;
 	msg->header.params.saysParams.nameStart = 0;
 	msg->header.params.saysParams.textLength = textLength;
 	msg->header.params.saysParams.textStart = nameLength;
 	msg->header.params.saysParams.isWhisper = isWhisper;
+	msg->header.dataSize = (nameLength + textLength) * sizeof(char);
+	msg->data = malloc(msg->header.dataSize);
 	copyStringToData(0, name, msg);
 	copyStringToData(nameLength, text, msg);
 
+	return msg;
+}
+
+YakMessage* createIdentifyMessage(unsigned char pwRequired) {
+	YakMessage* msg = malloc(sizeof(YakMessage));
+	msg->header.type = IDENTIFY;
+	msg->data = malloc(sizeof(unsigned char));
+	msg->data[0] = pwRequired;
+	msg->header.dataSize = sizeof(unsigned char);
+	msg->header.version = YAK_VERSION;
 	return msg;
 }
