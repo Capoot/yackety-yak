@@ -74,7 +74,6 @@ int sendMessage(YakMessage* msg, Connection* con) {
 
 int receiveMessage(YakMessage* msg, Connection* con) {
 
-
 	int size = sizeof(YakHeader);
 	char* buffer = malloc(size);
 
