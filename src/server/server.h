@@ -1,6 +1,8 @@
 #ifndef SERVER_H_
 #define SERVER_H_
 
+#include <windows.h>
+
 typedef enum {
 	SERVER_OK = 0,
 	SOCKET_BIND_ERROR = -201,
@@ -15,8 +17,10 @@ typedef enum {
 typedef struct {
 	unsigned short listenPort;
 	int maxConnections;
+	char* password;
+	struct timeval timeout;
 } ServerSettings;
 
-ServerError runServer(ServerSettings*);
+void runServer(ServerSettings*);
 
 #endif

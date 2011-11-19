@@ -21,4 +21,4 @@ typedef struct {
 	char* userName;
 } ClientSettings;
 
-ClientError runClient(ClientSettings*);
+void runClient(ClientSettings*);

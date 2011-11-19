@@ -5,10 +5,10 @@ LIBNET = ..\..\lib\libnet.a
 client: compile archive
 
 compile:
-	$(GCC) $(CFLAGS) network_wsockimpl.c
+	$(GCC) $(CFLAGS) network.c
 	
 archive:
-	ar rcs $(LIBNET) network_wsockimpl.o
+	ar rcs $(LIBNET) network.o
 	del *.o
 
 clean:

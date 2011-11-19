@@ -59,12 +59,8 @@ int main(int argc, char* argv[]) {
 		handleApplicationError(error);
 	}
 
-	error = runClient(&settings);
-	if(error != CLIENT_OK) {
-		handleApplicationError(error);
-	}
-
-	exit(0);
+	runClient(&settings);
+	return 0;
 }
 
 void handleApplicationError(ClientError error) {

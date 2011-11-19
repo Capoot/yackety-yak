@@ -6,10 +6,10 @@ client: compile archive
 
 compile:
 	$(GCC) $(CFLAGS) main.c
-	$(GCC) $(CFLAGS) comline.c
+	$(GCC) $(CFLAGS) cl_engine.c
 	
 archive:
-	ar rcs $(LIBCLIENT) main.o comline.o
+	ar rcs $(LIBCLIENT) main.o cl_engine.o
 	del *.o
 
 clean:

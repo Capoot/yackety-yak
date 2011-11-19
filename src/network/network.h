@@ -1,16 +1,20 @@
 #ifndef NETWORK_H_
 #define NETWORK_H_
 
+#include <windows.h>
 #include "../protocol/protocol.h"
-#include "connection.h"
 
-int startClient(const char*, unsigned short, Connection*);
-int startServer(unsigned short, int, Connection*);
-void shutDownClient(Connection*);
-void shutDownServer(Connection*);
-int waitForConnection(Connection*, Connection*);
-int getErrorCode(void);
-int sendMessage(YakMessage*, Connection*);
-int receiveMessage(YakMessage*, Connection*);
+char* serializeMessage(YakMessage*, int);
+YakHeader* deSerializeHeader(char*, int);
+int receiveMessage(YakMessage* msg, unsigned int socket, SOCKADDR_IN*, int*);
+int sendMessage(YakMessage* msg, unsigned int socket, SOCKADDR_IN*);
+
+enum network_errors {
+	WSA_OK = 0,
+	WSA_STARTUP_FAIL = 101,
+	WSA_CREATE_SOCKET_FAIL = 102,
+	WSA_BIND_FAIL = 103,
+	WSA_SOCKET_ERROR = 104
+};
 
 #endif /* NETWORK_H_ */

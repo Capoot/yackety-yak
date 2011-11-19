@@ -34,17 +34,19 @@ ServerError readArgs(int argc, char* argv[], ServerSettings* settings) {
 void init(ServerSettings* settings) {
 	settings->listenPort = 0;
 	settings->maxConnections = 0;
+	settings->timeout.tv_sec = 10; // TODO use argument instead of default
+	settings->timeout.tv_usec = 0;
 }
 
 void handleError(ServerError error) {
 	printf("Fatal Error: ");
 	switch(error) {
-	case SOCKET_BIND_ERROR: {
+	case SOCKET_BIND_ERROR: { // TODO cleanup unused error msgs
 		printf("could not bind socket");
 		break;
 	}
 	case SOCKET_LISTEN_ERROR: {
-		printf("could not set socket to listen mode");
+		printf("could not listen at socket");
 		break;
 	}
 	case SOCKET_CREATE_ERROR: {
@@ -80,11 +82,6 @@ int main(int argc, char* argv[]) {
 		exit((int)error);
 	}
 
-	error = runServer(settings);
-	if(error != SERVER_OK) {
-		handleError(error);
-		exit((int)error);
-	}
-
+	runServer(settings);
 	return 0;
 }
