@@ -9,11 +9,13 @@
 
 typedef struct {
 	unsigned int socket;
-	int running;
+	unsigned char running;
 	ClientSettings settings;
+	SOCKADDR_IN serverAddress;
 } YakClient;
 
 int startClient(YakClient* client) {
+	client->running = 1;
 	return 0;
 }
 
@@ -75,11 +77,16 @@ void clientLoop(YakClient* client) {
 	}
 }
 
+void initClient(YakClient* client) {
+	client->running = 0;
+}
+
 void runClient(ClientSettings* settings) {
 
 	int error;
 	YakClient client;
 	client.settings = *settings;
+	initClient(&client);
 
 	printf("connecting to host %s:%u... ", settings->serverIp, settings->serverPort);
 	error = startClient(&client);

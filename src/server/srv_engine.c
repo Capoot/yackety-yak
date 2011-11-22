@@ -7,9 +7,17 @@
 #include "../util/util.h"
 
 typedef struct {
+	char* userName;
+	SOCKADDR_IN address;
+	unsigned long lastMessage;
+} ClientSession;
+
+typedef struct {
 	SOCKET socket;
 	ServerSettings settings;
-	unsigned short running;
+	unsigned char running;
+	ClientSession* clients;
+	int numClients;
 } YakServer;
 
 int startServer(YakServer* server) {
@@ -39,13 +47,11 @@ int startServer(YakServer* server) {
 }
 
 void stopServer(YakServer* server) {
-	printf("Stopping server... ");
 	closesocket(server->socket);
 	WSACleanup();
-	printf("done!");
 }
 
-int getMessage(YakMessage* msg, YakServer* server) {
+int getMessage(YakMessage* msg, YakServer* server, SOCKADDR_IN* remoteAddr) {
 
 	FD_SET fdset;
 	FD_ZERO(&fdset);
@@ -61,36 +67,37 @@ int getMessage(YakMessage* msg, YakServer* server) {
 	}
 
 	if(!FD_ISSET(server->socket, &fdset)) {
+		// nothing to read
 		return 0;
 	}
 
-	SOCKADDR_IN remoteAddr;
 	int size = sizeof(remoteAddr);
-
-	// TODO do something useful with remote addy
-	return receiveMessage(msg, server->socket, &remoteAddr, &size);
+	code = receiveMessage(msg, server->socket, remoteAddr, &size);
+	return code;
 }
 
-int handleHelloMessage(YakMessage* msg) {
+int handleHelloMessage(YakMessage* msg, SOCKADDR_IN* remoteAddr) {
 
 	char* name;
 	char* password;
 	readHelloParams(msg, &name, &password);
 
 	// TODO hello msg...
+	// TODO if accepted, save address
 	printf("received hello from %s // %s...\n", name, password);
 
 	return 0;
 }
 
-void dispatchMessage(YakMessage* msg, YakServer* server) {
+void dispatchMessage(YakMessage* msg, YakServer* server, SOCKADDR_IN* remoteAddr) {
 
 	int error = 0;
 	switch(msg->header.type) {
 	case HELLO: {
-		error = handleHelloMessage(msg);
+		error = handleHelloMessage(msg, remoteAddr);
 		break;
 	}
+	// TODO proof of live...
 	default: {
 		// unrecognized type of message: ignored...
 		printf("discarding message of unknown type %d\n", msg->header.type);
@@ -98,7 +105,7 @@ void dispatchMessage(YakMessage* msg, YakServer* server) {
 	}
 
 	if(error != 0) {
-		// TODO error...
+		// TODO error... (probably non-fatal)
 	}
 }
 
@@ -106,8 +113,9 @@ void serverLoop(YakServer* server) {
 
 	int code;
 	YakMessage msg;
+	SOCKADDR_IN remoteAddr;
 
-	code = getMessage(&msg, server);
+	code = getMessage(&msg, server, &remoteAddr);
 	if(code == 0) {
 		// no message received. no need to handle.
 		return;
@@ -117,9 +125,25 @@ void serverLoop(YakServer* server) {
 		return;
 	}
 
-	dispatchMessage(&msg, server);
+	dispatchMessage(&msg, server, &remoteAddr);
 	if(msg.header.dataSize > 0) {
 		free(msg.data);
+	}
+}
+
+void initServer(YakServer* server) {
+	server->clients = malloc(server->settings.maxConnections * sizeof(ClientSession));
+	server->numClients = 0;
+	server->running = 0;
+}
+
+void destroyServer(YakServer* server) {
+	int count = server->settings.maxConnections;
+	for(int i=0; i<count; i++) {
+		if(&server->clients[i] != NULL) {
+			free(server->clients[i].userName);
+			free(&server->clients[i]);
+		}
 	}
 }
 
@@ -127,6 +151,7 @@ void runServer(ServerSettings* settings) {
 
 	YakServer server;
 	server.settings = *settings;
+	initServer(&server);
 
 	printf("Launching Yak server at port %d... ", settings->listenPort);
 	int error = startServer(&server);
@@ -143,6 +168,9 @@ void runServer(ServerSettings* settings) {
 		serverLoop(&server);
 	}
 
+	printf("Stopping server... ");
 	stopServer(&server);
+	destroyServer(&server);
+	printf("done!");
 }
 
