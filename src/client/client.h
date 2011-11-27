@@ -2,7 +2,9 @@
 #define CLIENT_H_
 #endif
 
-typedef enum {
+#include <windows.h>
+
+typedef enum { // TODO rework this... most of it isnt needed
 	CLIENT_OK = 0,
 	NAME_NOT_SPECIFIED = -101,
 	REMOTE_ADDRESS_NOT_SPECIFIED = -102,
@@ -17,8 +19,17 @@ typedef enum {
 
 typedef struct {
 	char* serverIp;
+	unsigned short clientPort;
 	unsigned short serverPort;
 	char* userName;
+	/** timeout for select statement */
+	struct timeval timeout;
 } ClientSettings;
+
+enum client_errors {
+	UNRECOGNIZED_MESSAGE = 200,
+	INVALID_RESPONSE = 201,
+	CONNECTION_REQUEST_FAIL = 202
+};
 
 void runClient(ClientSettings*);

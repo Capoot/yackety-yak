@@ -10,7 +10,7 @@ ServerError readArgs(int argc, char* argv[], ServerSettings* settings) {
 				return LISTEN_PORT_NOT_SPECIFIED;
 			}
 			long int port = strtol(argv[i+1], NULL, 10);
-			settings->listenPort = (unsigned short)port;
+			settings->serverPort = (unsigned short)port;
 			continue;
 		}
 		if(strcmp(argv[i], "-n") == 0) {
@@ -22,7 +22,7 @@ ServerError readArgs(int argc, char* argv[], ServerSettings* settings) {
 			continue;
 		}
 	}
-	if(settings->listenPort == 0) {
+	if(settings->serverPort == 0) {
 		return LISTEN_PORT_NOT_SPECIFIED;
 	}
 	if(settings->maxConnections == 0) {
@@ -32,7 +32,8 @@ ServerError readArgs(int argc, char* argv[], ServerSettings* settings) {
 }
 
 void init(ServerSettings* settings) {
-	settings->listenPort = 0;
+	settings->serverPort = 55555;
+	settings->clientPort = 55554;
 	settings->maxConnections = 0;
 	settings->timeout.tv_sec = 10; // TODO use argument instead of default
 	settings->timeout.tv_usec = 0;

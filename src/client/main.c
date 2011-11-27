@@ -4,7 +4,46 @@
 
 #include "client.h"
 
-void handleApplicationError(ClientError);
+void handleApplicationError(int error) { // TODO remove unused errors
+	printf("Fatal error: ");
+	switch(error) {
+	case NAME_NOT_SPECIFIED: {
+		printf("missing argument <user name>");
+		break;
+	}
+	case REMOTE_ADDRESS_NOT_SPECIFIED: {
+		printf("missing argument <server address>");
+		break;
+	}
+	case PORT_NOT_SPECIFIED: {
+		printf("missing argument <server port>");
+		break;
+	}
+	case CONNECTION_ERROR: {
+		printf("socket error");
+		break;
+	}
+	case CREATE_SOCKET_ERROR: {
+		printf("could not create socket");
+		break;
+	}
+	case CONNECT_SOCKET_ERROR: {
+		printf("could not establish connection to remote host");
+		break;
+	}
+	case INIT_SOCKET_ERROR: {
+		printf("could not initialize socket");
+		break;
+	}
+	case NETWORK_ERROR: {
+		printf("");
+	}
+	default: {
+		printf("unknown error");
+	}
+	}
+	exit((int)error);
+}
 
 ClientError readArgs(int argc, char* argv[], ClientSettings* settings) {
 	for(int i=1; i<argc-1; i++) {
@@ -46,7 +85,10 @@ ClientError readArgs(int argc, char* argv[], ClientSettings* settings) {
 void init(ClientSettings* settings) {
 	settings->userName = "";
 	settings->serverIp = "";
-	settings->serverPort = 0;
+	settings->clientPort = 55554;
+	settings->serverPort = 55555;
+	settings->timeout.tv_sec = 10; // TODO read param instead of default
+	settings->timeout.tv_usec = 0;
 }
 
 int main(int argc, char* argv[]) {
@@ -61,45 +103,4 @@ int main(int argc, char* argv[]) {
 
 	runClient(&settings);
 	return 0;
-}
-
-void handleApplicationError(ClientError error) {
-	printf("Fatal error: ");
-	switch(error) {
-	case NAME_NOT_SPECIFIED: {
-		printf("missing argument <user name>");
-		break;
-	}
-	case REMOTE_ADDRESS_NOT_SPECIFIED: {
-		printf("missing argument <remote address>");
-		break;
-	}
-	case PORT_NOT_SPECIFIED: {
-		printf("missing argument <remote port>");
-		break;
-	}
-	case CONNECTION_ERROR: {
-		printf("socket error");
-		break;
-	}
-	case CREATE_SOCKET_ERROR: {
-		printf("could not create socket");
-		break;
-	}
-	case CONNECT_SOCKET_ERROR: {
-		printf("could not establish connection to remote host");
-		break;
-	}
-	case INIT_SOCKET_ERROR: {
-		printf("could not initialize socket");
-		break;
-	}
-	case NETWORK_ERROR: {
-		printf(""); // FIXME report correctly
-	}
-	default: {
-		printf("unknown error");
-	}
-	}
-	exit((int)error);
 }

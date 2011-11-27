@@ -6,8 +6,8 @@
 
 char* serializeMessage(YakMessage*, int);
 YakHeader* deSerializeHeader(char*, int);
-int receiveMessage(YakMessage* msg, unsigned int socket, SOCKADDR_IN*, int*);
-int sendMessage(YakMessage* msg, unsigned int socket, SOCKADDR_IN*);
+int sendMessage(YakMessage*, unsigned int, SOCKADDR_IN*);
+int getMessage(YakMessage*, SOCKET, struct timeval, SOCKADDR_IN*);
 
 enum network_errors {
 	WSA_OK = 0,

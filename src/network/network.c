@@ -68,3 +68,27 @@ int sendMessage(YakMessage* msg, unsigned int socket, SOCKADDR_IN* target) {
 	free(bytes);
 	return sent;
 }
+
+int getMessage(YakMessage* msg, SOCKET s, struct timeval timeout, SOCKADDR_IN* remoteAddr) {
+
+	FD_SET fdset;
+	FD_ZERO(&fdset);
+	FD_SET(s, &fdset);
+
+	int code = select(0, &fdset, NULL, NULL, &timeout);
+	if(code == 0) {
+		// timeout - socket not ready yet
+		return 0;
+	}else if(code == SOCKET_ERROR) {
+		return code;
+	}
+
+	if(!FD_ISSET(s, &fdset)) {
+		// nothing to read
+		return 0;
+	}
+
+	int size = sizeof(remoteAddr);
+	code = receiveMessage(msg, s, remoteAddr, &size);
+	return code;
+}

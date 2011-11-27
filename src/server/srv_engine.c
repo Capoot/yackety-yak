@@ -35,7 +35,7 @@ int startServer(YakServer* server) {
 
 	SOCKADDR_IN addr;
 	addr.sin_family = AF_INET;
-	addr.sin_port = htons(server->settings.listenPort);
+	addr.sin_port = htons(server->settings.serverPort);
 	addr.sin_addr.s_addr = ADDR_ANY;
 	code = bind(server->socket, (SOCKADDR*)&addr, sizeof(SOCKADDR_IN));
 	if(code == SOCKET_ERROR) {
@@ -49,31 +49,6 @@ int startServer(YakServer* server) {
 void stopServer(YakServer* server) {
 	closesocket(server->socket);
 	WSACleanup();
-}
-
-int getMessage(YakMessage* msg, YakServer* server, SOCKADDR_IN* remoteAddr) {
-
-	FD_SET fdset;
-	FD_ZERO(&fdset);
-	FD_SET(server->socket, &fdset);
-	struct timeval timeout = server->settings.timeout;
-
-	int code = select(0, &fdset, NULL, NULL, &timeout);
-	if(code == 0) {
-		// timeout - socket not ready yet
-		return 0;
-	}else if(code == SOCKET_ERROR) {
-		return code;
-	}
-
-	if(!FD_ISSET(server->socket, &fdset)) {
-		// nothing to read
-		return 0;
-	}
-
-	int size = sizeof(remoteAddr);
-	code = receiveMessage(msg, server->socket, remoteAddr, &size);
-	return code;
 }
 
 int handleHelloMessage(YakMessage* msg, SOCKADDR_IN* remoteAddr) {
@@ -115,7 +90,7 @@ void serverLoop(YakServer* server) {
 	YakMessage msg;
 	SOCKADDR_IN remoteAddr;
 
-	code = getMessage(&msg, server, &remoteAddr);
+	code = getMessage(&msg, server->socket, server->settings.timeout, &remoteAddr);
 	if(code == 0) {
 		// no message received. no need to handle.
 		return;
@@ -153,7 +128,7 @@ void runServer(ServerSettings* settings) {
 	server.settings = *settings;
 	initServer(&server);
 
-	printf("Launching Yak server at port %d... ", settings->listenPort);
+	printf("Launching Yak server at port %d... ", settings->serverPort);
 	int error = startServer(&server);
 	if(error != 0) {
 		printError(error);

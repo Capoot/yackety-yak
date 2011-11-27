@@ -15,9 +15,11 @@ typedef enum {
 } ServerError;
 
 typedef struct {
-	unsigned short listenPort;
+	unsigned short serverPort;
+	unsigned short clientPort;
 	int maxConnections;
 	char* password;
+	/** timeout for select statement */
 	struct timeval timeout;
 } ServerSettings;
 
