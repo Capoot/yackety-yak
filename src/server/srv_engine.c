@@ -51,12 +51,14 @@ void stopServer(YakServer* server) {
 	WSACleanup();
 }
 
-int putClient(char* name, SOCKADDR_IN* remoteAdrr, YakServer* server) {
-	// check for free client slots
+int putClient(char* name, char* password, SOCKADDR_IN* remoteAdrr, YakServer* server) {
+	if(strcmp(server->settings.password, password) != 0) {
+		return 2;
+	}
 	if(server->numClients >= server->settings.maxConnections) {
 		return 1;
 	}
-	// check if desired name is free
+	// check if user name is available
 	for(int i=0; i<server->settings.maxConnections; i++) {
 		if(server->clients[i].userName == NULL) {
 			continue;
@@ -79,7 +81,7 @@ int handleHelloMessage(YakMessage* msg, SOCKADDR_IN* remoteAddr, YakServer* serv
 	readHelloParams(msg, &name, &password);
 	YakMessage* reply;
 
-	int code = putClient(name, remoteAddr, server);
+	int code = putClient(name, password, remoteAddr, server);
 	if(code != 0) {
 		reply = createRejectedMessage(code);
 	} else {
@@ -98,7 +100,7 @@ int handleHelloMessage(YakMessage* msg, SOCKADDR_IN* remoteAddr, YakServer* serv
 	if(code == 0) {
 		printf("User %s connected from remote address %s\n", name, ipString);
 	} else {
-		printf("Connection request from remote address %s was rejected (code %d)", ipString, code);
+		printf("Connection request from remote address %s was rejected (code %d)\n", ipString, code);
 	}
 	return 0;
 }

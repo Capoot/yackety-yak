@@ -193,8 +193,11 @@ void runClient(ClientSettings* settings) {
 		printf("success!\n");
 	}
 
+	printf("Enter password for server %s: ", settings->serverIp);
+	char password[33];
+	readLine(password, 32);
 	printf("connecting to host %s:%u... ", settings->serverIp, settings->serverPort);
-	error = logIn("yak123", &client); // TODO debug! instead password should be read from console
+	error = logIn(password, &client); // TODO debug! instead password should be read from console
 	if(error != 0) {
 		printError(error);
 		stopClient(&client);

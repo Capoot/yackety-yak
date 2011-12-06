@@ -14,6 +14,10 @@ void printError(int code) {
 			printf("Bad pointer (internal memory corruption)");
 			break;
 		}
+		case 10038: {
+			printf("Socket operation on nonsocket");
+			break;
+		}
 		case 10040: {
 			printf("Message too long");
 			break;
@@ -42,15 +46,15 @@ void printError(int code) {
 			break;
 		}
 		case REJECTED_NAME_TAKEN: {
-			printf("rejected: user name not available");
+			printf("user name not available");
 			break;
 		}
 		case REJECTED_SERVER_FULL: {
-			printf("rejected: server is full");
+			printf("server is full");
 			break;
 		}
 		case REJECTED_WRONG_PASSWORD: {
-			printf("rejected: wrong password");
+			printf("wrong password");
 			break;
 		}
 		default: {
@@ -62,4 +66,15 @@ void printError(int code) {
 	}
 
 	printf("unexpected internal error\n");
+}
+
+void readLine(char* buffer, int maxLength) {
+	fgets(buffer, 32, stdin);
+	// now remove trailing line feeds
+	int len = strlen(buffer);
+	for(int i=1; i<2; i++) {
+		if(buffer[len-i] == '\n' || buffer[len-i] == '\r') {
+			buffer[len-i] = '\0';
+		}
+	}
 }

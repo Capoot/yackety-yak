@@ -37,8 +37,9 @@ void init(ServerSettings* settings) {
 	settings->serverPort = 55555;
 	settings->clientPort = 55554;
 	settings->maxConnections = 10;
-	settings->timeout.tv_sec = 10; // TODO use argument instead of default
+	settings->timeout.tv_sec = 10; // FIXME use argument instead of default
 	settings->timeout.tv_usec = 0;
+	settings->password = "yak123"; // FIXME debug default password
 }
 
 void handleError(ServerError error) {
