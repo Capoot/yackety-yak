@@ -137,7 +137,6 @@ void serverLoop(YakServer* server) {
 		// no message received. no need to handle.
 		return;
 	} else if(code == SOCKET_ERROR) {
-		printf("\n\t***SOCKET ERROR BEI getMessage***\n");
 		printError(WSA_SOCKET_ERROR);
 		server->running = 0;
 		return;
