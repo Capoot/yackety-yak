@@ -4,6 +4,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 #include "protocol.h"
 
@@ -74,7 +75,9 @@ int readRejectedParams(YakMessage* msg, int* reason) {
 	if(msg->data == NULL) {
 		return 100;
 	}
-	*reason = (int)msg->data;
+	*reason = 0;
+	*reason += ((int)msg->data[0]);
+	*reason += ((int)msg->data[1]) >> 8;
 	return 0;
 }
 

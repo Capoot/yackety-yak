@@ -23,31 +23,24 @@ int handleWelcome(YakMessage* msg, YakClient* client) {
 int handleRejected(YakMessage* msg, YakClient* client) {
 	int reason;
 	readRejectedParams(msg, &reason);
-	printf("Server rejected connection request. Reason: ");
 	switch(reason) {
-	case 1: {
-		printf("server is full");
-		break;
+		case 1: {
+			return REJECTED_SERVER_FULL;
+		}
+		case 2: {
+			return REJECTED_WRONG_PASSWORD;
+		}
+		case 3: {
+			return REJECTED_NAME_TAKEN;
+		}
+		default: {
+			printf("unknown reason");
+		}
 	}
-	case 2: {
-		printf("wrong password");
-		break;
-	}
-	case 3: {
-		printf("user name already taken");
-		break;
-	}
-	default: {
-		printf("unknown reason");
-	}
-	}
-	printf("\n");
-	client->running = 0;
-	client->isLoggedIn = 0;
 	return 0;
 }
 
-void dispatchMessage(YakMessage* msg, YakClient* client, SOCKADDR_IN* remoteAddr) {
+int dispatchMessage(YakMessage* msg, YakClient* client, SOCKADDR_IN* remoteAddr) {
 
 	// TODO check if the message came from the correct server
 
@@ -77,9 +70,7 @@ void dispatchMessage(YakMessage* msg, YakClient* client, SOCKADDR_IN* remoteAddr
 	}
 	}
 
-	if(error != 0) {
-		// TODO handle error...
-	}
+	return error;
 }
 
 int logIn(char* password, YakClient* client) {
@@ -111,8 +102,7 @@ int logIn(char* password, YakClient* client) {
 		if(receivedMessage.header.type != WELCOME && receivedMessage.header.type != REJECTED) {
 			return INVALID_RESPONSE;
 		}
-		dispatchMessage(&receivedMessage, client, &remoteAddr);
-		return 0;
+		return dispatchMessage(&receivedMessage, client, &remoteAddr);
 	}
 	return -1;
 }
@@ -138,12 +128,6 @@ int startClient(YakClient* client) { // TODO duplicated in serv_engine.c; find a
 	code = bind(client->socket, (SOCKADDR*)&addr, sizeof(SOCKADDR_IN));
 	if(code == SOCKET_ERROR) {
 		return WSA_BIND_FAIL;
-	}
-
-	code = logIn("yak123", client); // TODO debug! instead password should be read from console
-	if(code != 0) {
-		client->running = 0;
-		return code;
 	}
 
 	// TODO wait for reply, resend after timeout, retry some times or give up
@@ -199,8 +183,18 @@ void runClient(ClientSettings* settings) {
 	client.settings = *settings;
 	initClient(&client);
 
-	printf("connecting to host %s:%u... ", settings->serverIp, settings->serverPort);
+	printf("Starting client... ");
 	error = startClient(&client);
+	if(error != 0) {
+		printError(error);
+		stopClient(&client);
+		exit(error);
+	} else {
+		printf("success!\n");
+	}
+
+	printf("connecting to host %s:%u... ", settings->serverIp, settings->serverPort);
+	error = logIn("yak123", &client); // TODO debug! instead password should be read from console
 	if(error != 0) {
 		printError(error);
 		stopClient(&client);

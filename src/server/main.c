@@ -4,22 +4,24 @@
 #include "server.h"
 
 ServerError readArgs(int argc, char* argv[], ServerSettings* settings) {
-	for(int i=1; i<argc-1; i++) {
-		if(strcmp(argv[i], "-p") == 0) {
-			if(argv[i+1] == NULL) {
-				return LISTEN_PORT_NOT_SPECIFIED;
+	if(argc > 1) {
+		for(int i=1; i<argc-1; i++) {
+			if(strcmp(argv[i], "-p") == 0) {
+				if(argv[i+1] == NULL) {
+					return LISTEN_PORT_NOT_SPECIFIED;
+				}
+				long int port = strtol(argv[i+1], NULL, 10);
+				settings->serverPort = (unsigned short)port;
+				continue;
 			}
-			long int port = strtol(argv[i+1], NULL, 10);
-			settings->serverPort = (unsigned short)port;
-			continue;
-		}
-		if(strcmp(argv[i], "-n") == 0) {
-			if(argv[i+1] == NULL) {
-				return MAX_CONNECTIONS_NOT_SPECIFIED;
+			if(strcmp(argv[i], "-n") == 0) {
+				if(argv[i+1] == NULL) {
+					return MAX_CONNECTIONS_NOT_SPECIFIED;
+				}
+				long int max = strtol(argv[i+1], NULL, 10);
+				settings->maxConnections = (int)max;
+				continue;
 			}
-			long int max = strtol(argv[i+1], NULL, 10);
-			settings->maxConnections = (int)max;
-			continue;
 		}
 	}
 	if(settings->serverPort == 0) {
@@ -34,7 +36,7 @@ ServerError readArgs(int argc, char* argv[], ServerSettings* settings) {
 void init(ServerSettings* settings) {
 	settings->serverPort = 55555;
 	settings->clientPort = 55554;
-	settings->maxConnections = 0;
+	settings->maxConnections = 10;
 	settings->timeout.tv_sec = 10; // TODO use argument instead of default
 	settings->timeout.tv_usec = 0;
 }

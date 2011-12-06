@@ -41,6 +41,18 @@ void printError(int code) {
 			printf("connecting to server failed after retrying three times");
 			break;
 		}
+		case REJECTED_NAME_TAKEN: {
+			printf("rejected: user name not available");
+			break;
+		}
+		case REJECTED_SERVER_FULL: {
+			printf("rejected: server is full");
+			break;
+		}
+		case REJECTED_WRONG_PASSWORD: {
+			printf("rejected: wrong password");
+			break;
+		}
 		default: {
 			printf("unknown internal client error");
 		}

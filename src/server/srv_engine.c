@@ -75,25 +75,31 @@ int handleHelloMessage(YakMessage* msg, SOCKADDR_IN* remoteAddr, YakServer* serv
 
 	char* name;
 	char* password;
+	char ipString[16];
 	readHelloParams(msg, &name, &password);
 	YakMessage* reply;
 
 	int code = putClient(name, remoteAddr, server);
-	int error = 0;
 	if(code != 0) {
 		reply = createRejectedMessage(code);
-		error = sendMessage(reply, server->socket, remoteAddr);
 	} else {
 		reply = createWelcomeMessage();
-		error = sendMessage(reply, server->socket, remoteAddr);
 	}
+
+	int error = 0;
+	error = sendMessage(reply, server->socket, remoteAddr);
 	if(error == SOCKET_ERROR) {
 		// TODO this doesn't have to be fatal. might be connection reset by peer or something...
 		printError(WSA_SOCKET_ERROR);
 		server->running = 0;
 	}
 
-	printf("User %s connected from remote address %s", name, "xxx"); // FIXME dummy address
+	ipToString(remoteAddr->sin_addr.s_addr, ipString);
+	if(code == 0) {
+		printf("User %s connected from remote address %s\n", name, ipString);
+	} else {
+		printf("Connection request from remote address %s was rejected (code %d)", ipString, code);
+	}
 	return 0;
 }
 
@@ -173,7 +179,6 @@ void runServer(ServerSettings* settings) {
 		printf("success!\n");
 	}
 
-	printf("Waiting for transmission... ");
 	while(server.running) {
 		serverLoop(&server);
 	}
@@ -181,6 +186,6 @@ void runServer(ServerSettings* settings) {
 	printf("Stopping server... ");
 	stopServer(&server);
 	destroyServer(&server);
-	printf("done!");
+	printf("done!\n");
 }
 

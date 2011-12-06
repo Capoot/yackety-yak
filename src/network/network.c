@@ -1,4 +1,6 @@
 #include <windows.h>
+#include <stdio.h>
+#include <string.h>
 
 #include "network.h"
 
@@ -83,4 +85,14 @@ int getMessage(YakMessage* msg, SOCKET s, struct timeval timeout, SOCKADDR_IN* r
 	int size = sizeof(SOCKADDR_IN);
 	code = receiveMessage(msg, s, remoteAddr, &size);
 	return code;
+}
+
+int ipToString(unsigned long ip, char* buffer) {
+	unsigned long reversedIp = ntohl(ip);
+	BYTE byte1 = (BYTE)(reversedIp >> 6); // FIXME ip calculation broken
+	BYTE byte2 = (BYTE)(reversedIp >> 4);
+	BYTE byte3 = (BYTE)(reversedIp >> 2);
+	BYTE byte4 = (BYTE)reversedIp;
+	sprintf(buffer, "%u.%u.%u.%u", byte1, byte2, byte3, byte4);
+	return strlen(buffer);
 }
