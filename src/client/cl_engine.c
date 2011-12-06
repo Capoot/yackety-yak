@@ -47,6 +47,25 @@ int handleRejected(YakMessage* msg, YakClient* client) {
 	return 0;
 }
 
+int handleSays(YakMessage* msg, YakClient* client) {
+	char* user;
+	char* text;
+	int isWhisper;
+	readSaysParams(msg, &user, &text, &isWhisper);
+	if(strcmp(user, client->settings.userName) == 0) {
+		free(user);
+		user = "You";
+	}
+	if(isWhisper) {
+		printf("%s whispers to you: %s\n", user, text);
+	} else {
+		printf("%s: %s\n", user, text);
+	}
+	free(user);
+	free(text);
+	return 0;
+}
+
 int dispatchMessage(YakMessage* msg, YakClient* client, SOCKADDR_IN* remoteAddr) {
 
 	// TODO check if the message came from the correct server
@@ -62,6 +81,7 @@ int dispatchMessage(YakMessage* msg, YakClient* client, SOCKADDR_IN* remoteAddr)
 		break;
 	}
 	case SAYS: {
+		error = handleSays(msg, client);
 		break;
 	}
 	case WHISPER: {
@@ -164,24 +184,41 @@ int evalInput(char* input) {
 	return CLIENT_COMMAND_TEXT;
 }
 
+int say(char* text, YakClient* client) {
+	int error = 0;
+	YakMessage* msg = createSayMessage(text);
+	error = sendMessage(msg, client->socket, &client->serverAddress);
+	free(msg);
+	if(error == SOCKET_ERROR) {
+		return WSA_SOCKET_ERROR;
+	}
+	return 0;
+}
+
 int runAction(int action, char* data, YakClient* client) {
+	int error = 0;
 	switch(action) {
 	case CLIENT_COMMAND_BYE: {
-		client->running = 0; // TODO send bye to server
+		client->running = 0;
+		YakMessage* bye = createByeMessage();
+		int code = sendMessage(bye, client->socket, &client->serverAddress);
+		if(code == SOCKET_ERROR) {
+			error = WSA_SOCKET_ERROR;
+		}
+		deleteMessage(bye);
 		break;
 	}
 	case CLIENT_COMMAND_TEXT: {
-		printf("I will deliver your message immediately, sir\n");
+		error = say(data, client);
 		break;
 	}case CLIENT_COMMAND_DISCARD: {
-		printf("Sir, I have discarded your input as ordered\n");
 		break;
 	}
 	default: {
 		printf("Sir, I couldn't recognize your input. Perhaps a typo?\n");
 	}
 	}
-	return 0;
+	return error;
 }
 
 void clientLoop(YakClient* client) {
@@ -194,6 +231,7 @@ void clientLoop(YakClient* client) {
 	if(code == SOCKET_ERROR) {
 		printError(WSA_SOCKET_ERROR);
 		client->running = 0;
+		return;
 	}
 	if(code > 0) {
 		dispatchMessage(&msg, client, &remoteAddress);
@@ -203,11 +241,15 @@ void clientLoop(YakClient* client) {
 	}
 
 	// FIXME reading input blocks network traffic
-	char input[223];
-	printf(":: ");
-	readLine(input, 222);
+	char input[MAX_TEXT_SIZE];
+	printf(">> ");
+	readLine(input, MAX_TEXT_SIZE - 1);
 	int action = evalInput(input);
-	runAction(action, input, client);
+	code = runAction(action, input, client);
+	if(code != 0){
+		printError(code);
+		client->running = 0;
+	}
 }
 
 void initClient(YakClient* client) {

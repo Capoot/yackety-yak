@@ -22,6 +22,10 @@ void printError(int code) {
 			printf("Message too long");
 			break;
 		}
+		case 10047: {
+			printf("Address family not supported by protocol family");
+			break;
+		}
 		case 10054: {
 			printf("Connection reset by peer");
 			break;
@@ -58,14 +62,14 @@ void printError(int code) {
 			break;
 		}
 		default: {
-			printf("unknown internal client error");
+			printf("internal error %d", code);
 		}
 		}
 		printf("\n");
 		return;
 	}
 
-	printf("unexpected internal error\n");
+	printf("unexpected internal error %d\n", code);
 }
 
 void readLine(char* buffer, int maxLength) {

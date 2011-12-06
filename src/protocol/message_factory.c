@@ -29,8 +29,6 @@ int countChars(char** strings, int size) {
 
 /*** Public Functions ***/
 
-// TODO limit data size to MAX_DATA_SIZE
-
 YakMessage* createHelloMessage(char* name, char* password) {
 
 	YakMessage* msg = (YakMessage*)malloc(sizeof(YakMessage));

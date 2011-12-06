@@ -39,7 +39,7 @@ void init(ServerSettings* settings) {
 	settings->maxConnections = 10;
 	settings->timeout.tv_sec = 10; // FIXME use argument instead of default
 	settings->timeout.tv_usec = 0;
-	settings->password = "yak123"; // FIXME debug default password
+	settings->password = "";
 }
 
 void handleError(ServerError error) {

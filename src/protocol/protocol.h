@@ -89,7 +89,7 @@ YakMessage* createIdentifyMessage(unsigned char);
 
 /*** Message Utility Functions ***/
 void deleteMessage(YakMessage*);
-int readSayParams(YakMessage*, char*);
+void readSayParams(YakMessage*, char**);
 int readHelloParams(YakMessage*, char**, char**);
 int readWhisperParams(YakMessage*, char*, char*);
 int readRogerParams(YakMessage*, char*);
@@ -98,6 +98,6 @@ int readGotoParams(YakMessage*, long int*);
 int readNamesParams(YakMessage*, char**, int*);
 int readAddNameParams(YakMessage*, char*);
 int readRemoveNameParams(YakMessage*, char*);
-int readSaysParams(YakMessage*, char*, char*, int*);
+void readSaysParams(YakMessage*, char**, char**, int*);
 
 #endif

@@ -92,8 +92,7 @@ int handleHelloMessage(YakMessage* msg, SOCKADDR_IN* remoteAddr, YakServer* serv
 	error = sendMessage(reply, server->socket, remoteAddr);
 	if(error == SOCKET_ERROR) {
 		// TODO this doesn't have to be fatal. might be connection reset by peer or something...
-		printError(WSA_SOCKET_ERROR);
-		server->running = 0;
+		return WSA_SOCKET_ERROR;
 	}
 
 	ipToString(remoteAddr->sin_addr.s_addr, ipString);
@@ -105,12 +104,90 @@ int handleHelloMessage(YakMessage* msg, SOCKADDR_IN* remoteAddr, YakServer* serv
 	return 0;
 }
 
+char* findUser(SOCKADDR_IN* addr, YakServer* server) {
+	for(int i=0; i<server->settings.maxConnections; i++) {
+		if(server->clients[i].userName == NULL) {
+			continue;
+		}
+		if(server->clients[i].address.sin_addr.s_addr == addr->sin_addr.s_addr) {
+			return server->clients[i].userName;
+		}
+	}
+	return NULL;
+}
+
+int broadcast(YakMessage* msg, YakServer* server) {
+	for(int i=0; i<server->settings.maxConnections; i++) {
+		if(server->clients[i].userName == NULL) { // FIXME I dont like this... this really should be a collection
+			continue;
+		}
+		char ip[16];
+		ipToString(server->clients[i].address.sin_addr.s_addr, ip);
+		if(sendMessage(msg, server->socket, &server->clients[i].address) == SOCKET_ERROR) {
+			return WSA_SOCKET_ERROR;
+		}
+	}
+	return 0;
+}
+
+int handleSayMessage(YakMessage* msg, SOCKADDR_IN* remoteAddr, YakServer* server) {
+	char* user = findUser(remoteAddr, server);
+	if(user == NULL) {
+		// no such user: drop msg
+		char ipString[16];
+		ipToString(remoteAddr->sin_addr.s_addr, ipString);
+		printf("Warning: received message from unauthorized host %s. This could be an attempt of attack\n", ipString);
+	}
+	char* text;
+	readSayParams(msg, &text);
+	printf("%s says:\"%s\"\n", user, text);
+	YakMessage* says = createSaysMessage(user, text, 0);
+	int error = broadcast(says, server);
+	free(text);
+	deleteMessage(says);
+	return error;
+}
+
+void removeClient(char* name, YakServer* server) {
+	for(int i=0; i<server->settings.maxConnections; i++) {
+		if(server->clients[i].userName == NULL) {
+			continue;
+		}
+		if(strcmp(server->clients[i].userName, name) == 0) {
+			server->clients[i].userName = NULL;
+			memset(&server->clients[i].address, 0, sizeof(SOCKADDR_IN));
+			server->numClients--;
+			printf("User %s disconnected\n", name);
+		}
+	}
+}
+
+int handleBye(YakMessage* msg, SOCKADDR_IN* remoteAddr, YakServer* server) {
+	char* user = findUser(remoteAddr, server);
+	if(user == NULL) { // TODO duplicated code
+		// no such user: drop msg
+		char ipString[16];
+		ipToString(remoteAddr->sin_addr.s_addr, ipString);
+		printf("Warning: received message from unauthorized host %s. This could be an attempt of attack\n", ipString);
+	}
+	removeClient(user, server);
+	return 0;
+}
+
 void dispatchMessage(YakMessage* msg, YakServer* server, SOCKADDR_IN* remoteAddr) {
 
 	int error = 0;
 	switch(msg->header.type) {
 	case HELLO: {
 		error = handleHelloMessage(msg, remoteAddr, server);
+		break;
+	}
+	case SAY: {
+		error = handleSayMessage(msg, remoteAddr, server);
+		break;
+	}
+	case BYE: {
+		error = handleBye(msg, remoteAddr, server);
 		break;
 	}
 	// TODO proof of live...
@@ -120,8 +197,10 @@ void dispatchMessage(YakMessage* msg, YakServer* server, SOCKADDR_IN* remoteAddr
 	}
 	}
 
-	if(error != 0) {
-		// TODO error... (probably non-fatal)
+	if(error == WSA_SOCKET_ERROR) {
+		// server socket broken
+		printError(WSA_SOCKET_ERROR);
+		server->running = 0;
 	}
 }
 

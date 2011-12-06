@@ -21,21 +21,16 @@ void deleteMessage(YakMessage* msg) {
 	free(msg);
 }
 
-int readSayParams(YakMessage* msg, char* text) {
-	if(msg->data == NULL) {
-		return 100;
-	}
-	text = (char*)malloc(msg->header.dataSize * sizeof(char) + 1);
-	strncpy(text, (char*)msg->data, msg->header.dataSize);
-	zeroTerminate(text, msg->header.dataSize);
-	return 0;
-}
-
 void bytewiseStringCopy(const char* src, char* dest, int size) {
 	for(int i=0; i<size; i++) {
 		dest[i] = src[i];
 	}
 	dest[size] = '\0';
+}
+
+void readSayParams(YakMessage* msg, char** text) {
+	*text = malloc(msg->header.dataSize * sizeof(char) + 1);
+	bytewiseStringCopy((char*)msg->data, *text, msg->header.dataSize);
 }
 
 int readHelloParams(YakMessage* msg, char** name, char** password) {
@@ -129,20 +124,13 @@ int readRemoveNameParams(YakMessage* msg, char* name) {
 	return 0;
 }
 
-int readSaysParams(YakMessage* msg, char* name, char* text, int* isWhisper) {
-	if(msg->data == NULL) {
-		return 100;
-	}
+void readSaysParams(YakMessage* msg, char** name, char** text, int* isWhisper) {
 	SaysParams* params = &msg->header.params.saysParams;
-	name = (char*)malloc((params->nameLength + 1) * sizeof(char));
-	text = (char*)malloc((params->textLength + 1) * sizeof(char));
-	isWhisper = (int*)malloc(sizeof(int));
+	*name = (char*)malloc((params->nameLength + 1) * sizeof(char));
+	*text = (char*)malloc((params->textLength + 1) * sizeof(char));
 	*isWhisper = params->isWhisper;
-	strncpy(name, (char*)&msg->data[params->nameStart], params->nameLength);
-	strncpy(text, (char*)&msg->data[params->textStart], params->textLength);
-	zeroTerminate(name, params->nameLength);
-	zeroTerminate(text, params->textLength);
-	return 0;
+	bytewiseStringCopy((char*)&msg->data[params->nameStart], *name, params->nameLength);
+	bytewiseStringCopy((char*)&msg->data[params->textStart], *text, params->textLength);
 }
 
 /**
