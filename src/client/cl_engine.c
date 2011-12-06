@@ -26,15 +26,15 @@ int handleRejected(YakMessage* msg, YakClient* client) {
 	printf("Server rejected connection request. Reason: ");
 	switch(reason) {
 	case 1: {
-		printf("wrong password");
+		printf("server is full");
 		break;
 	}
 	case 2: {
-		printf("user name already taken");
+		printf("wrong password");
 		break;
 	}
 	case 3: {
-		printf("server is full");
+		printf("user name already taken");
 		break;
 	}
 	default: {
@@ -89,6 +89,10 @@ int logIn(char* password, YakClient* client) {
 
 	while(try < 3) {
 
+		if(try > 0 && try < 3) {
+			printf("Retrying... ");
+		}
+
 		YakMessage* helloMsg = createHelloMessage(client->settings.userName, password);
 		sendMessage(helloMsg, client->socket, &client->serverAddress);
 
@@ -96,15 +100,11 @@ int logIn(char* password, YakClient* client) {
 		SOCKADDR_IN remoteAddr;
 		code = getMessage(&receivedMessage, client->socket, client->settings.timeout, &remoteAddr);
 		if(code == 0) {
-			// no reply. request may have got lost. try again
-			printf("\nconnection request failed. ");
+			// no reply. try again...
+			printf("failed.\n");
 			try++;
-			if(try < 3) {
-				printf("retrying... ");
-			}
 			continue;
 		} else if(code == SOCKET_ERROR) {
-			client->running = 0;
 			return WSA_SOCKET_ERROR;
 		}
 
@@ -141,8 +141,9 @@ int startClient(YakClient* client) { // TODO duplicated in serv_engine.c; find a
 	}
 
 	code = logIn("yak123", client); // TODO debug! instead password should be read from console
-	if(code == -1) {
-		return CONNECTION_REQUEST_FAIL;
+	if(code != 0) {
+		client->running = 0;
+		return code;
 	}
 
 	// TODO wait for reply, resend after timeout, retry some times or give up
@@ -153,7 +154,8 @@ int startClient(YakClient* client) { // TODO duplicated in serv_engine.c; find a
 }
 
 void stopClient(YakClient* client) {
-
+	closesocket(client->socket);
+	WSACleanup();
 }
 
 void clientLoop(YakClient* client) {

@@ -9,15 +9,29 @@ void printError(int code) {
 	// WSA Error
 	if(code >= 100 && code < 200) {
 		int wsaError = WSAGetLastError();
-		printf("WSA Error %d: ");
 		switch(wsaError) {
+		case 10014: {
+			printf("Bad pointer (internal memory corruption)");
+			break;
+		}
+		case 10040: {
+			printf("Message too long");
+			break;
+		}
+		case 10054: {
+			printf("Connection reset by peer");
+			break;
+		}
 		default: {
-			printf("unknown WSA error");
+			printf("unknown WSA error %d", wsaError);
 		}
 		}
+		printf("\n");
+		return;
+	}
 
 	// client error
-	} else if(code >= 200 && code < 300) {
+	if(code >= 200 && code < 300) {
 		switch(code) {
 		case INVALID_RESPONSE: {
 			printf("server responed with invalid message type");
@@ -31,11 +45,9 @@ void printError(int code) {
 			printf("unknown internal client error");
 		}
 		}
-
-	// generic error
-	} else {
-		printf("unexpected internal error");
+		printf("\n");
+		return;
 	}
 
-	printf("\n");
+	printf("unexpected internal error\n");
 }

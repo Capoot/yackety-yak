@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <windows.h>
+#include <string.h>
 #include "server.h"
 #include "../protocol/protocol.h"
 #include "../network/network.h"
@@ -9,7 +10,6 @@
 typedef struct {
 	char* userName;
 	SOCKADDR_IN address;
-	unsigned long lastMessage;
 } ClientSession;
 
 typedef struct {
@@ -51,16 +51,49 @@ void stopServer(YakServer* server) {
 	WSACleanup();
 }
 
-int handleHelloMessage(YakMessage* msg, SOCKADDR_IN* remoteAddr) {
+int putClient(char* name, SOCKADDR_IN* remoteAdrr, YakServer* server) {
+	// check for free client slots
+	if(server->numClients >= server->settings.maxConnections) {
+		return 1;
+	}
+	// check if desired name is free
+	for(int i=0; i<server->settings.maxConnections; i++) {
+		if(server->clients[i].userName == NULL) {
+			continue;
+		}
+		if(strcmp(server->clients[i].userName, name) == 0) {
+			return 3;
+		}
+	}
+	server->clients[server->numClients].address = *remoteAdrr;
+	server->clients[server->numClients].userName = name;
+	server->numClients++;
+	return 0;
+}
+
+int handleHelloMessage(YakMessage* msg, SOCKADDR_IN* remoteAddr, YakServer* server) {
 
 	char* name;
 	char* password;
 	readHelloParams(msg, &name, &password);
+	YakMessage* reply;
 
-	// TODO hello msg...
-	// TODO if accepted, save address
-	printf("received hello from %s // %s...\n", name, password);
+	int code = putClient(name, remoteAddr, server);
+	int error = 0;
+	if(code != 0) {
+		reply = createRejectedMessage(code);
+		error = sendMessage(reply, server->socket, remoteAddr);
+	} else {
+		reply = createWelcomeMessage();
+		error = sendMessage(reply, server->socket, remoteAddr);
+	}
+	if(error == SOCKET_ERROR) {
+		// TODO this doesn't have to be fatal. might be connection reset by peer or something...
+		printError(WSA_SOCKET_ERROR);
+		server->running = 0;
+	}
 
+	printf("User %s connected from remote address %s", name, "xxx"); // FIXME dummy address
 	return 0;
 }
 
@@ -69,7 +102,7 @@ void dispatchMessage(YakMessage* msg, YakServer* server, SOCKADDR_IN* remoteAddr
 	int error = 0;
 	switch(msg->header.type) {
 	case HELLO: {
-		error = handleHelloMessage(msg, remoteAddr);
+		error = handleHelloMessage(msg, remoteAddr, server);
 		break;
 	}
 	// TODO proof of live...
@@ -89,12 +122,14 @@ void serverLoop(YakServer* server) {
 	int code;
 	YakMessage msg;
 	SOCKADDR_IN remoteAddr;
+	memset(&remoteAddr, 0, sizeof(SOCKADDR_IN));
 
 	code = getMessage(&msg, server->socket, server->settings.timeout, &remoteAddr);
 	if(code == 0) {
 		// no message received. no need to handle.
 		return;
 	} else if(code == SOCKET_ERROR) {
+		printf("\n\t***SOCKET ERROR BEI getMessage***\n");
 		printError(WSA_SOCKET_ERROR);
 		server->running = 0;
 		return;

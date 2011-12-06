@@ -3,6 +3,7 @@
 
 #define BYTE unsigned char
 #define YAK_VERSION 1
+#define MAX_DATA_SIZE 256
 
 typedef enum {
 	HELLO,
@@ -20,6 +21,12 @@ typedef enum {
 	ROGER,
 	IDENTIFY
 } MessageType;
+
+typedef enum {
+	SERVER_FULL = 1,
+	WRONG_PASSWORD = 2,
+	NAME_TAKEN = 3
+} RejectedReason;
 
 typedef struct {
 	int nameStart;

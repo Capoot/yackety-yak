@@ -1,4 +1,5 @@
 #include <windows.h>
+
 #include "network.h"
 
 char* serializeMessage(YakMessage* msg, int size) {
@@ -25,40 +26,31 @@ YakHeader* deSerializeHeader(char* bytes, int size) {
 
 int receiveMessage(YakMessage* msg, unsigned int socket, SOCKADDR_IN* remoteAddr, int* addrSize) {
 
-	int received = 0;
-	int size = sizeof(YakHeader);
+	int size = sizeof(YakHeader) + MAX_DATA_SIZE;
 	char* buffer = malloc(size);
 
 	int result = recvfrom(socket, buffer, size, 0, (SOCKADDR*)remoteAddr, addrSize);
 	if(result <= 0) {
 		// result is an error code
+		free(buffer);
 		return result;
-	} else {
-		received += result;
 	}
 
-	YakHeader* header = deSerializeHeader(buffer, size);
+	YakHeader* header = deSerializeHeader(buffer, sizeof(YakHeader));
 	msg->header = *header;
-	free(buffer);
 	free(header);
 
-	size = header->dataSize;
-	if(size > 0) {
-		buffer = malloc(size);
-		result = recvfrom(socket, buffer, size, 0, (SOCKADDR*)remoteAddr, addrSize);
-		if(result <= 0) {
-			// result is an error code
-			return result;
-		} else {
-			received += result;
-		}
-		msg->data = malloc(size * sizeof(unsigned char));
-		for(int i=0; i<size; i++) {
-			msg->data[i] = buffer[i];
+	int dataSize = header->dataSize;
+	int dataStart = sizeof(YakHeader);
+	if(dataSize > 0) {
+		msg->data = malloc(dataSize * sizeof(BYTE));
+		for(int i=0; i<dataSize; i++) {
+			msg->data[i] = buffer[dataStart+i]; // FIXME implement network to host translation
 		}
 	}
+	free(buffer);
 
-	return received;
+	return result;
 }
 
 int sendMessage(YakMessage* msg, unsigned int socket, SOCKADDR_IN* target) {
@@ -88,7 +80,7 @@ int getMessage(YakMessage* msg, SOCKET s, struct timeval timeout, SOCKADDR_IN* r
 		return 0;
 	}
 
-	int size = sizeof(remoteAddr);
+	int size = sizeof(SOCKADDR_IN);
 	code = receiveMessage(msg, s, remoteAddr, &size);
 	return code;
 }

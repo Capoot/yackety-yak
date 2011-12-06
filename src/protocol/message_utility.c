@@ -74,7 +74,6 @@ int readRejectedParams(YakMessage* msg, int* reason) {
 	if(msg->data == NULL) {
 		return 100;
 	}
-	reason = (int*)malloc(sizeof(int));
 	*reason = (int)msg->data;
 	return 0;
 }
