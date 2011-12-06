@@ -89,8 +89,8 @@ int getMessage(YakMessage* msg, SOCKET s, struct timeval timeout, SOCKADDR_IN* r
 
 int ipToString(unsigned long ip, char* buffer) {
 	unsigned long reversedIp = ntohl(ip);
-	BYTE byte1 = (BYTE)(reversedIp >> 3*8);
-	BYTE byte2 = (BYTE)(reversedIp >> 2*8);
+	BYTE byte1 = (BYTE)(reversedIp >> 24);
+	BYTE byte2 = (BYTE)(reversedIp >> 16);
 	BYTE byte3 = (BYTE)(reversedIp >> 8);
 	BYTE byte4 = (BYTE)reversedIp;
 	sprintf(buffer, "%u.%u.%u.%u", byte1, byte2, byte3, byte4);

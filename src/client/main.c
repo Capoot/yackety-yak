@@ -87,7 +87,7 @@ void init(ClientSettings* settings) {
 	settings->serverIp = "";
 	settings->clientPort = 55554;
 	settings->serverPort = 55555;
-	settings->timeout.tv_sec = 10; // TODO read param instead of default
+	settings->timeout.tv_sec = 1; // TODO read param instead of default
 	settings->timeout.tv_usec = 0;
 }
 

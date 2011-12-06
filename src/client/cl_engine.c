@@ -7,6 +7,13 @@
 #include "../network/network.h"
 #include "../util/util.h"
 
+enum ClientCommands {
+	CLIENT_COMMAND_TEXT,
+	CLIENT_COMMAND_BYE,
+	CLIENT_COMMAND_UNRECOGNIZED,
+	CLIENT_COMMAND_DISCARD
+};
+
 typedef struct {
 	unsigned int socket;
 	unsigned char running;
@@ -142,6 +149,41 @@ void stopClient(YakClient* client) {
 	WSACleanup();
 }
 
+int evalInput(char* input) {
+	if(strcmp(input, "") == 0) {
+		return CLIENT_COMMAND_DISCARD;
+	}
+	if(input[0] == '/') {
+		// input is a command
+		if(strcmp(input, "/bye") == 0) {
+			return CLIENT_COMMAND_BYE;
+		}
+		return CLIENT_COMMAND_UNRECOGNIZED;
+	}
+	// input is a text message
+	return CLIENT_COMMAND_TEXT;
+}
+
+int runAction(int action, char* data, YakClient* client) {
+	switch(action) {
+	case CLIENT_COMMAND_BYE: {
+		client->running = 0; // TODO send bye to server
+		break;
+	}
+	case CLIENT_COMMAND_TEXT: {
+		printf("I will deliver your message immediately, sir\n");
+		break;
+	}case CLIENT_COMMAND_DISCARD: {
+		printf("Sir, I have discarded your input as ordered\n");
+		break;
+	}
+	default: {
+		printf("Sir, I couldn't recognize your input. Perhaps a typo?\n");
+	}
+	}
+	return 0;
+}
+
 void clientLoop(YakClient* client) {
 
 	int code;
@@ -149,22 +191,23 @@ void clientLoop(YakClient* client) {
 	SOCKADDR_IN remoteAddress;
 
 	code = getMessage(&msg, client->socket, client->settings.timeout, &remoteAddress);
-	if(code == 0) {
-		// no message received, no need to handle
-		return;
-	}
 	if(code == SOCKET_ERROR) {
 		printError(WSA_SOCKET_ERROR);
 		client->running = 0;
 	}
-
-	dispatchMessage(&msg, client, &remoteAddress);
-	if(msg.header.dataSize > 0) {
-		free(msg.data);
+	if(code > 0) {
+		dispatchMessage(&msg, client, &remoteAddress);
+		if(msg.header.dataSize > 0) {
+			free(msg.data);
+		}
 	}
 
-	// TODO read input
-	// TODO handle user events
+	// FIXME reading input blocks network traffic
+	char input[223];
+	printf(":: ");
+	readLine(input, 222);
+	int action = evalInput(input);
+	runAction(action, input, client);
 }
 
 void initClient(YakClient* client) {
@@ -193,11 +236,13 @@ void runClient(ClientSettings* settings) {
 		printf("success!\n");
 	}
 
-	printf("Enter password for server %s: ", settings->serverIp);
-	char password[33];
-	readLine(password, 32);
-	printf("connecting to host %s:%u... ", settings->serverIp, settings->serverPort);
-	error = logIn(password, &client); // TODO debug! instead password should be read from console
+	printf("Enter password for host %s: ", settings->serverIp);
+	/* block to limit lifetime of password buffer */ {
+		char password[33];
+		readLine(password, 32);
+		printf("connecting to host %s:%u... ", settings->serverIp, settings->serverPort);
+		error = logIn(password, &client);
+	}
 	if(error != 0) {
 		printError(error);
 		stopClient(&client);
